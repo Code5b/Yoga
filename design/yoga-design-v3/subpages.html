@@ -1,0 +1,1370 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Yoga 用户端 V3 · 二三四级页面</title>
+<link rel="stylesheet" href="tokens.css">
+<style>
+  .screen{display:none}
+  .screen.active{display:block;animation:subfade .22s ease}
+  @keyframes subfade{from{opacity:0}to{opacity:1}}
+  /* 页面选择器（模拟器工具，非产品 UI） */
+  .snav{position:sticky;top:0;z-index:50;height:32px;box-sizing:border-box;background:rgba(27,26,23,.96);color:#F2F0EA;padding:0 12px;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid rgba(255,255,255,.08)}
+  .snav::-webkit-scrollbar{display:none}
+  .snav button{flex:none;font-size:11px;font-weight:600;color:#A9A49A;padding:5px 10px;border-radius:5px;border:1px solid transparent;white-space:nowrap;background:none}
+  .snav button.on{background:var(--y-brand-500);color:#1A1A17;border-color:var(--y-brand-500)}
+  .snav .sep{flex:none;color:#55524A;font-size:10px;align-self:center}
+  /* 子页面导航（返回 + 标题 + 胶囊） */
+  .sub-nav{height:calc(52px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top);display:flex;align-items:center;justify-content:space-between;gap:8px;background:rgba(246,245,242,.9);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);position:relative}
+  .sub-nav:after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--y-border);opacity:.7}
+  .sub-nav .back{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--y-ink-700);flex:none;transition:background var(--y-dur-fast) var(--y-ease)}
+  .sub-nav .back:active{background:var(--y-surface-3)}
+  .sub-nav .back svg{width:20px;height:20px}
+  .sub-nav h1{font-size:16px;font-weight:600;letter-spacing:-.01em;flex:1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sub-nav .right{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--y-ink-600);flex:none}
+  .sub-nav .right svg{width:19px;height:19px}
+  .sub-nav .capsule{margin-right:12px}
+  /* 微信胶囊 */
+  .capsule{width:88px;height:32px;border:1px solid rgba(0,0,0,.06);border-radius:999px;background:rgba(255,255,255,.92);display:flex;align-items:center;justify-content:space-between;padding:0 9px;flex:none;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+  .capsule .c{width:16px;height:16px;border-radius:50%;border:1.2px solid var(--y-ink-600);display:flex;align-items:center;justify-content:center;font-size:8px;color:var(--y-ink-600)}
+  .capsule .c b{width:3px;height:3px;border-radius:50%;background:var(--y-ink-600);display:block;margin:0 1px}
+  .capsule .d{display:flex;align-items:center;gap:1.5px}
+  .capsule .d i{width:2.5px;height:2.5px;border-radius:50%;background:var(--y-ink-600)}
+  /* 沉浸 hero 变体（课程详情） */
+  .d-hero{position:relative;overflow:hidden;min-height:230px;background:#201E16}
+  .d-hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .d-hero::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(14,13,10,.92) 0%,rgba(14,13,10,.18) 42%,rgba(14,13,10,.05) 100%)}
+  .d-hero-content{position:absolute;z-index:2;left:16px;right:16px;bottom:14px;color:#fff}
+  .d-hero .chip-row{display:flex;gap:6px;margin-bottom:8px}
+  .d-hero h2{font-size:24px;font-weight:800;letter-spacing:-.02em;line-height:1.25}
+  .d-hero .meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:12px;color:rgba(255,255,255,.85);margin-top:6px}
+  .d-hero .meta .y-icon{width:13px;height:13px}
+  /* 教练卡 */
+  .coach-card{display:flex;align-items:center;gap:12px}
+  .coach-card .info{flex:1;min-width:0}
+  .tag-list{display:flex;flex-wrap:wrap;gap:6px}
+  .tag-list .y-chip{height:24px;font-size:11px;padding:0 8px}
+  /* 评价 */
+  .review{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid var(--y-border)}
+  .review:last-child{border-bottom:0}
+  .review .stars{display:flex;gap:2px;color:var(--y-brand-600)}
+  .review .stars .y-icon{width:11px;height:11px}
+  /* 规格选择 */
+  .sku-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+  .sku{height:36px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--y-ink-600);background:var(--y-surface-2);transition:all var(--y-dur-fast) var(--y-ease)}
+  .sku.on{background:var(--y-brand-tint);color:var(--y-brand-800);font-weight:600}
+  /* 金额明细 */
+  .fee-row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;font-size:14px}
+  .fee-row.total{border-top:1px dashed var(--y-border-strong);margin-top:8px;padding-top:10px}
+  .fee-row.total strong{font-size:18px}
+  /* 播放器 */
+  .player{position:relative;overflow:hidden;background:#0D0C09;border-radius:12px}
+  .player img{width:100%;aspect-ratio:16/9;object-fit:cover;opacity:.55}
+  .player::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.5),transparent 45%)}
+  .player .pp{position:absolute;z-index:2;left:50%;top:50%;transform:translate(-50%,-50%);width:56px;height:56px;border-radius:50%;background:var(--y-brand-500);color:#1A1A17;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(255,214,0,.4)}
+  .player .pp svg{width:24px;height:24px}
+  .player .pl{position:absolute;z-index:2;left:12px;right:12px;bottom:10px;display:flex;justify-content:space-between;align-items:center;color:#fff;font-size:11px}
+  .pl-bar{position:absolute;z-index:2;left:12px;right:12px;bottom:32px;height:3px;border-radius:2px;background:rgba(255,255,255,.22);overflow:hidden}
+  .pl-bar i{display:block;height:100%;width:38%;background:var(--y-brand-500);border-radius:2px}
+  /* 章节 */
+  .lesson{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--y-border)}
+  .lesson:last-child{border-bottom:0}
+  .lesson .no{width:26px;height:26px;border-radius:6px;background:var(--y-surface-3);color:var(--y-ink-500);font-size:12px;font-weight:600;display:flex;align-items:center;justify-content:center;flex:none}
+  .lesson.done .no{background:var(--y-success-bg);color:var(--y-success)}
+  .lesson.cur .no{background:var(--y-brand-500);color:var(--y-brand-on)}
+  /* 消息 */
+  .msg{display:flex;gap:10px;padding:12px 0;border-bottom:1px solid var(--y-border);align-items:flex-start}
+  .msg:last-child{border-bottom:0}
+  .msg .ic{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex:none}
+  .msg .ic svg{width:19px;height:19px}
+  /* 客服会话 */
+  .chat{display:flex;flex-direction:column;gap:12px}
+  .chat-msg{display:flex;gap:8px;align-items:flex-end}
+  .chat-msg.me{justify-content:flex-end}
+  .chat-msg .bubble{max-width:78%;padding:10px 12px;border-radius:12px;border-top-left-radius:4px;background:var(--y-surface);box-shadow:0 1px 2px rgba(27,26,23,.04);font-size:13px;line-height:1.6;color:var(--y-ink-800)}
+  .chat-msg.me .bubble{background:var(--y-brand-500);color:var(--y-brand-on);border-radius:12px;border-top-right-radius:4px}
+  .chat-quick{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+  .chat-quick span{font-size:12px;color:var(--y-ink-600);background:var(--y-surface-2);border-radius:999px;padding:6px 12px}
+  /* 设置分组 */
+  .set-group{margin-bottom:10px}
+  /* 签到码 */
+  .qrcode{width:190px;height:190px;margin:0 auto;border:1px solid var(--y-border-strong);border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;position:relative}
+  .qrcode svg{width:120px;height:120px;color:var(--y-ink-950)}
+  /* 页脚说明 */
+  .sub-foot{position:sticky;bottom:0;z-index:20;background:linear-gradient(to top,var(--y-bg) 60%,transparent);padding:10px 16px 16px}
+  .sub-sticky{position:sticky;bottom:0;z-index:25;padding:10px 16px 14px;background:rgba(246,245,242,.92);backdrop-filter:blur(16px);border-top:1px solid var(--y-border);display:flex;gap:10px;align-items:center}
+</style>
+</head>
+<body>
+<svg aria-hidden="true" style="position:absolute;width:0;height:0" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="home" viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5v10a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-10"/><path d="M9.5 20.5v-6h5v6"/></symbol>
+    <symbol id="calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></symbol>
+    <symbol id="calendar-check" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18M9 15.5l2 2 4-4.5"/></symbol>
+    <symbol id="activity" viewBox="0 0 24 24"><path d="M3 12h4l2.5-6 4 12 2.5-6H21"/></symbol>
+    <symbol id="shopping-bag" viewBox="0 0 24 24"><path d="M5.5 8h13l1 13h-15z"/><path d="M8.5 8a3.5 3.5 0 0 1 7 0"/></symbol>
+    <symbol id="cart" viewBox="0 0 24 24"><circle cx="9.5" cy="19" r="1.6"/><circle cx="16.5" cy="19" r="1.6"/><path d="M3 4.5h2.5l2.5 11h10l2.5-8H7.5"/></symbol>
+    <symbol id="user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0 1 15 0"/></symbol>
+    <symbol id="users" viewBox="0 0 24 24"><circle cx="9" cy="8.5" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 5.5a3.2 3.2 0 0 1 0 6M18.5 14.6a5 5 0 0 1 3.4 5.4"/></symbol>
+    <symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol>
+    <symbol id="check" viewBox="0 0 24 24"><path d="m4.5 12.5 5 5 10-11"/></symbol>
+    <symbol id="check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8 12.5 3 3 5.5-7"/></symbol>
+    <symbol id="alert" viewBox="0 0 24 24"><path d="M12 3.5 21.5 20h-19z"/><path d="M12 10v4.5M12 17.3h.01"/></symbol>
+    <symbol id="info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6h.01"/></symbol>
+    <symbol id="hourglass" viewBox="0 0 24 24"><path d="M6.5 3h11M6.5 21h11M8 3c0 4.5 2.5 6.6 4 9 1.5-2.4 4-4.5 4-9M8 21c0-4.5 2.5-6.6 4-9 1.5 2.4 4 4.5 4 9"/></symbol>
+    <symbol id="lock" viewBox="0 0 24 24"><rect x="5" y="10.5" width="14" height="10" rx="2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="star" viewBox="0 0 24 24"><polygon points="12 3.2 14.6 8.7 20.6 9.6 16.2 13.9 17.3 19.8 12 16.9 6.7 19.8 7.8 13.9 3.4 9.6 9.4 8.7"/></symbol>
+    <symbol id="map-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.1-7-11a7 7 0 0 1 14 0c0 4.9-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+    <symbol id="play" viewBox="0 0 24 24"><path d="M8 5.5v13l11-6.5z"/></symbol>
+    <symbol id="pause" viewBox="0 0 24 24"><path d="M9 5v14M15 5v14"/></symbol>
+    <symbol id="flame" viewBox="0 0 24 24"><path d="M12 21.5c-3.9 0-6.5-2.6-6.5-6.5 0-3.1 2-5 3.2-6.3 1-1.1 1.7-2.8 2-4.9 2.7 1.7 4.6 4.2 4.9 6.9.7-.5 1.3-1.4 1.7-2.3 1.9 2 3.4 4.6 3.4 6.9 0 3.9-2.6 6.5-6.7 6.2z"/></symbol>
+    <symbol id="target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="trophy" viewBox="0 0 24 24"><path d="M8 3h8v5.5a4 4 0 0 1-8 0z"/><path d="M8 5.5H4.8A1.8 1.8 0 0 0 4 9.2a4 4 0 0 0 4 2M16 5.5h3.2A1.8 1.8 0 0 1 20 9.2a4 4 0 0 1-4 2M12 12.5v4M8 21h8M10 17h4l.8 4H9.2z"/></symbol>
+    <symbol id="repeat" viewBox="0 0 24 24"><path d="M17 3.5 21 7.5l-4 4"/><path d="M21 7.5H8a5 5 0 0 0-5 5M7 20.5 3 16.5l4-4"/><path d="M3 16.5h13a5 5 0 0 0 5-5"/></symbol>
+    <symbol id="timer" viewBox="0 0 24 24"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 10v3.5l2.5 1.5M9.5 2.5h5M12 2.5v3"/></symbol>
+    <symbol id="heart" viewBox="0 0 24 24"><path d="M12 20.5C7 16.5 3.5 13.3 3.5 9.8 3.5 7.3 5.4 5.5 7.8 5.5c1.7 0 3.2.9 4.2 2.4 1-1.5 2.5-2.4 4.2-2.4 2.4 0 4.3 1.8 4.3 4.3 0 3.5-3.5 6.7-8.5 10.7z"/></symbol>
+    <symbol id="book" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3.5H6.5A2.5 2.5 0 0 0 4 6z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/></symbol>
+    <symbol id="lotus" viewBox="0 0 24 24"><path d="M12 21.5c-4.8 0-8-2.8-8-7 0-2.5 1.6-4.1 3.5-4.6-.1 3.9 1.4 7.3 4.5 9.2.1-3.9-1.4-7.3-4.5-9.2.1-2.9 2.2-4.9 4.5-4.9s4.4 2 4.5 4.9c-3.1 1.9-4.6 5.3-4.5 9.2 3.1-1.9 4.6-5.3 4.5-9.2 1.9.5 3.5 2.1 3.5 4.6 0 4.2-3.2 7-8 7z"/><path d="M12 3.5v2.5"/></symbol>
+    <symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2.5M12 19v2.5M2.5 12H5M19 12h2.5M5.3 5.3l1.8 1.8M16.9 16.9l1.8 1.8M18.7 5.3l-1.8 1.8M7.1 16.9l-1.8 1.8"/></symbol>
+    <symbol id="wallet" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 9.5h18M14.5 14.5h3.5"/></symbol>
+    <symbol id="card" viewBox="0 0 24 24"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3 10h18M6.5 14.5h4"/></symbol>
+    <symbol id="coupon" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2.5a2 2 0 0 0 0 4V16a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2.5a2 2 0 0 0 0-4z"/><path d="M13 6.5v11"/></symbol>
+    <symbol id="receipt" viewBox="0 0 24 24"><path d="M5.5 3.5h13v17l-2-1.5-2 1.5-2.5-1.5-2.5 1.5-2-1.5-2 1.5z"/><path d="M9 8.5h6M9 12h6M9 15.5h3"/></symbol>
+    <symbol id="gift" viewBox="0 0 24 24"><rect x="3.5" y="7.5" width="17" height="4" rx="1"/><path d="M5.5 11.5V20a1.5 1.5 0 0 0 1.5 1.5h10A1.5 1.5 0 0 0 18.5 20v-8.5M12 7.5V21.5M12 7.5S6.5 7.7 6.5 5.2C6.5 4 8 3.2 9.4 4 10.6 4.7 11 6.3 11 7.5M12 7.5s5.5.2 5.5-2.3c0-1.2-1.5-2-2.9-1.2-1.2.7-1.6 2.3-1.6 3.5"/></symbol>
+    <symbol id="package" viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4.5 7.5 7.5 4.5 7.5-4.5M12 12v9"/></symbol>
+    <symbol id="truck" viewBox="0 0 24 24"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h10A1.5 1.5 0 0 1 16 6.5V15H3z"/><path d="M16 9.5h3.5l2 3V15h-5.5"/><circle cx="7" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M9 17.5h6"/></symbol>
+    <symbol id="shield" viewBox="0 0 24 24"><path d="M12 2.5 19.5 6v5.5c0 5-3.1 8.3-7.5 10.5C7.6 19.8 4.5 16.5 4.5 11.5V6z"/></symbol>
+    <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="minus" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="trash" viewBox="0 0 24 24"><path d="M4 6.5h16M9.5 6.5V5a1.5 1.5 0 0 1 1.5-1.5h2A1.5 1.5 0 0 1 14.5 5v1.5M6.5 6.5l1 13a1.5 1.5 0 0 0 1.5 1.4h6a1.5 1.5 0 0 0 1.5-1.4l1-13"/><path d="M10 11v5.5M14 11v5.5"/></symbol>
+    <symbol id="search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></symbol>
+    <symbol id="filter" viewBox="0 0 24 24"><path d="M4 6h16M7.5 12h9M10.5 18h3"/></symbol>
+    <symbol id="edit" viewBox="0 0 24 24"><path d="m4.5 16.5-.8 4.3 4.3-.8L19.5 8.5l-3.5-3.5z"/><path d="m13.5 6.5 3.5 3.5"/></symbol>
+    <symbol id="bell" viewBox="0 0 24 24"><path d="M18 9.5a6 6 0 0 0-12 0c0 4.5-1.8 6.5-1.8 6.5h15.6S18 14 18 9.5z"/><path d="M10.5 20a1.9 1.9 0 0 0 3 0"/></symbol>
+    <symbol id="task" viewBox="0 0 24 24"><rect x="4" y="3.5" width="16" height="17" rx="2"/><path d="m8.5 9 1.5 1.5 2.5-3M8.5 14.5 10 16l2.5-3"/></symbol>
+    <symbol id="chart" viewBox="0 0 24 24"><path d="M4 20.5V14M10 20.5V8.5M16 20.5V11.5M21 20.5H3"/></symbol>
+    <symbol id="phone" viewBox="0 0 24 24"><path d="M22 16.9v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.79 19.79 0 0 1 2.12 4.2 2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.81.36 1.6.68 2.35a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.75.32 1.54.55 2.35.68a2 2 0 0 1 1.72 2.03z"/></symbol>
+    <symbol id="message" viewBox="0 0 24 24"><path d="M20.5 12a8.5 8.5 0 0 1-8.5 8.5c-1.4 0-2.8-.3-4-1L3.5 20.5l1.2-4A8.5 8.5 0 1 1 20.5 12z"/><path d="M8.5 12h.01M12 12h.01M15.5 12h.01"/></symbol>
+    <symbol id="scan" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2.5v2.5H14zM19 14h1v1h-1zM14 19h1v1h-1zM17.5 16.5H19V18h-1.5z"/></symbol>
+    <symbol id="camera" viewBox="0 0 24 24"><path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2l1.5-2.5h6L16.5 7h2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.5"/></symbol>
+    <symbol id="trend-up" viewBox="0 0 24 24"><path d="m3 16 6-6 4 4 7.5-7.5"/><path d="M14.5 7.5H21V14"/></symbol>
+    <symbol id="trend-down" viewBox="0 0 24 24"><path d="m3 8 6 6 4-4 7.5 7.5"/><path d="M14.5 16.5H21V10"/></symbol>
+    <symbol id="share" viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="m8.3 10.8 7.4-3.6M8.3 13.2l7.4 3.6"/></symbol>
+    <symbol id="refresh" viewBox="0 0 24 24"><path d="M20 11.5a8 8 0 0 0-14-5L3.5 9M3.5 4v5h5M4 12.5a8 8 0 0 0 14 5l2.5-2.5M20.5 20v-5h-5"/></symbol>
+    <symbol id="sparkle" viewBox="0 0 24 24"><path d="M12 4c.6 3.9 2.9 6.2 6.8 6.8-3.9.6-6.2 2.9-6.8 6.8-.6-3.9-2.9-6.2-6.8-6.8 3.9-.6 6.2-2.9 6.8-6.8z"/></symbol>
+    <symbol id="crown" viewBox="0 0 24 24"><path d="m3.5 7 4 4.5L12 5l4.5 6.5 4-4.5L19 18H5z"/></symbol>
+    <symbol id="settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.2a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.2a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3h.1a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.2a1.7 1.7 0 0 0 1 1.5h.1a1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9v.1a1.7 1.7 0 0 0 1.5 1h.2a2 2 0 1 1 0 4h-.2a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+    <symbol id="flag" viewBox="0 0 24 24"><path d="M5.5 21V4.5M5.5 4.5h11L14 8.5l2.5 4h-11"/></symbol>
+    <symbol id="more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.2" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="close" viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></symbol>
+    <symbol id="arrow-left" viewBox="0 0 24 24"><path d="M19 12H5M11 6l-6 6 6 6"/></symbol>
+    <symbol id="chevron-right" viewBox="0 0 24 24"><path d="m9 5.5 6.5 6.5L9 18.5"/></symbol>
+    <symbol id="chevron-down" viewBox="0 0 24 24"><path d="m5.5 9 6.5 6.5L18.5 9"/></symbol>
+    <symbol id="badge-check" viewBox="0 0 24 24"><circle cx="12" cy="9" r="5.5"/><path d="M8.5 13.5 7 21l5-2.5L17 21l-1.5-7.5"/><path d="m9.5 9 1.8 1.8 3.2-3.6"/></symbol>
+    <symbol id="menu" viewBox="0 0 24 24"><path d="M4 6.5h16M4 12h16M4 17.5h16"/></symbol>
+  </svg>
+<main class="y-page">
+
+<!-- 页面选择器（模拟器工具） -->
+<nav class="snav">
+  <button class="on" data-p="course">课程详情</button><span class="sep">→</span>
+  <button data-p="coach">教练详情</button><span class="sep">→</span>
+  <button data-p="product">商品详情</button><span class="sep">→</span>
+  <button data-p="cart">购物车</button><span class="sep">→</span>
+  <button data-p="pay">支付确认</button><span class="sep">→</span>
+  <button data-p="order">订单详情</button><span class="sep">→</span>
+  <button data-p="orders">订单列表</button><span class="sep">→</span>
+  <button data-p="address">收货地址</button><span class="sep">→</span>
+  <button data-p="after">售后申请</button>
+  <button data-p="member">权益详情</button><span class="sep">→</span>
+  <button data-p="lesson">数字课程</button><span class="sep">→</span>
+  <button data-p="record">训练记录</button><span class="sep">→</span>
+  <button data-p="task">任务详情</button><span class="sep">→</span>
+  <button data-p="calendar">打卡日历</button><span class="sep">→</span>
+  <button data-p="coupon">优惠券</button><span class="sep">→</span>
+  <button data-p="fav">我的收藏</button>
+  <button data-p="msg">消息中心</button><span class="sep">→</span>
+  <button data-p="service">客服</button><span class="sep">→</span>
+  <button data-p="settings">设置</button><span class="sep">→</span>
+  <button data-p="profile">个人资料</button><span class="sep">→</span>
+  <button data-p="checkin">签到码</button>
+</nav>
+
+<!-- ================= 课程详情（二级） ================= -->
+<section class="screen active" id="p-course">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="history.back()" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>课程详情</h1>
+    <div class="right"><svg class="y-icon"><use href="#more"/></svg></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div class="d-hero">
+    <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=1200&q=85" alt="肩颈舒缓 Flow">
+    <div class="d-hero-content">
+      <div class="chip-row">
+        <span class="y-chip y-chip-brand">今天 19:00</span>
+        <span class="y-chip" style="background:rgba(255,255,255,.14);color:#F2F0EA">剩 3 位</span>
+      </div>
+      <h2>肩颈舒缓 Flow</h2>
+      <div class="meta">
+        <svg class="y-icon"><use href="#clock"/></svg>60 分钟
+        <svg class="y-icon"><use href="#map-pin"/></svg>教室 A
+        <svg class="y-icon"><use href="#user"/></svg>Anna 老师
+        <svg class="y-icon"><use href="#star"/></svg>4.9（128）
+      </div>
+    </div>
+  </div>
+  <div style="padding:14px 16px 0">
+    <div class="y-card y-card-pad">
+      <div class="coach-card" onclick="go('coach')">
+        <img class="y-avatar lg" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80" alt="Anna">
+        <div class="info">
+          <div class="y-row" style="gap:6px"><strong style="font-size:15px">Anna 老师</strong><span class="y-chip y-chip-brand" style="height:20px;font-size:10px;padding:0 6px">认证</span></div>
+          <div class="y-caption" style="margin-top:2px">Mobility 认证 · 肩颈改善专长 · 8 年教学</div>
+        </div>
+        <span class="y-list-arrow"><svg class="y-icon"><use href="#chevron-right"/></svg></span>
+      </div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-col" style="gap:10px;font-size:14px">
+        <div class="y-row" style="align-items:flex-start"><span class="y-chip y-chip-brand" style="height:22px;font-size:11px;margin-top:1px">适合人群</span><span style="color:var(--y-ink-600)">久坐办公、肩颈僵硬人群，初学者友好</span></div>
+        <div class="y-row" style="align-items:flex-start"><span class="y-chip y-chip-brand" style="height:22px;font-size:11px;margin-top:1px">课程内容</span><span style="color:var(--y-ink-600)">肩颈热身 → 流动串联 → 深度拉伸，全程引导呼吸</span></div>
+        <div class="y-row" style="align-items:flex-start"><span class="y-chip y-chip-brand" style="height:22px;font-size:11px;margin-top:1px">注意事项</span><span style="color:var(--y-ink-600)">请提前 10 分钟到店，如有不适及时示意教练</span></div>
+        <div class="y-row" style="align-items:flex-start"><span class="y-chip y-chip-brand" style="height:22px;font-size:11px;margin-top:1px">取消规则</span><span style="color:var(--y-ink-600)">开课前 2 小时可免费取消，超时扣 1 次</span></div>
+      </div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-between"><h3 style="font-size:15px;font-weight:600">学员评价</h3><span class="y-caption">128 条</span></div>
+      <div class="review">
+        <img class="y-avatar sm" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=120&q=80" alt="V">
+        <div style="flex:1;min-width:0">
+          <div class="y-between"><strong style="font-size:13px">Vivian</strong><span class="y-caption">3 天前</span></div>
+          <div class="stars" style="margin-top:2px"><svg class="y-icon"><use href="#star"/></svg><svg class="y-icon"><use href="#star"/></svg><svg class="y-icon"><use href="#star"/></svg><svg class="y-icon"><use href="#star"/></svg><svg class="y-icon"><use href="#star"/></svg></div>
+          <p style="font-size:13px;color:var(--y-ink-600);margin-top:4px;line-height:1.6">练完第二天肩颈明显放松，Anna 老师的手法很细腻，会反复确认你的感受。</p>
+        </div>
+      </div>
+      <div class="review">
+        <img class="y-avatar sm" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=120&q=80" alt="K">
+        <div style="flex:1;min-width:0">
+          <div class="y-between"><strong style="font-size:13px">Kiki</strong><span class="y-caption">1 周前</span></div>
+          <div class="stars" style="margin-top:2px"><svg class="y-icon"><use href="#star"/></svg><svg class="y-icon"><use href="#star"/></svg><svg class="y-icon"><use href="#star"/></svg><svg class="y-icon"><use href="#star"/></svg><svg class="y-icon"><use href="#star"/></svg></div>
+          <p style="font-size:13px;color:var(--y-ink-600);margin-top:4px;line-height:1.6">对长期伏案的人太友好了，强烈推荐体验课先试一次。</p>
+        </div>
+      </div>
+      <button class="y-btn y-btn-outline y-btn-sm y-btn-block" style="margin-top:6px">查看全部 128 条评价</button>
+    </div>
+  </div>
+  <div class="sub-sticky">
+    <div class="y-grow">
+      <div class="y-price" style="font-size:20px"><span class="yen">¥</span>39</div>
+      <div class="y-caption">会员权益可预约 · 剩 3 位</div>
+    </div>
+    <button class="y-btn y-btn-primary y-btn-lg" onclick="toast('预约成功，已占用名额')">立即预约</button>
+  </div>
+</section>
+
+<!-- ================= 教练详情（二级） ================= -->
+<section class="screen" id="p-coach">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('course')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>教练详情</h1>
+    <div class="right"><svg class="y-icon"><use href="#more"/></svg></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div class="d-hero" style="min-height:210px">
+    <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=1200&q=85" alt="Anna 教练">
+    <div class="d-hero-content">
+      <div class="chip-row">
+        <span class="y-chip y-chip-brand">认证教练</span>
+        <span class="y-chip" style="background:rgba(255,255,255,.14);color:#F2F0EA">8 年教学</span>
+      </div>
+      <h2>Anna 老师</h2>
+      <div class="meta">
+        <svg class="y-icon"><use href="#star"/></svg>4.9（128）
+        <svg class="y-icon"><use href="#users"/></svg>学员 320+
+        <svg class="y-icon"><use href="#trophy"/></svg>RYT-500
+      </div>
+    </div>
+  </div>
+  <div style="padding:14px 16px 0">
+    <div class="y-card y-card-pad">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:10px">擅长方向</h3>
+      <div class="tag-list">
+        <span class="y-chip y-chip-brand">肩颈改善</span>
+        <span class="y-chip">流瑜伽</span>
+        <span class="y-chip">阴瑜伽</span>
+        <span class="y-chip">产后修复</span>
+        <span class="y-chip">体态评估</span>
+      </div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:8px">个人介绍</h3>
+      <p style="font-size:13px;color:var(--y-ink-600);line-height:1.7">Mobility 体系认证，专注肩颈与久坐人群的改善训练。教学风格细腻，重视动作细节与呼吸节奏，擅长根据学员身体状态即时调整序列。</p>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-between"><h3 style="font-size:15px;font-weight:600">开设课程</h3><span class="y-caption">12 节</span></div>
+      <div class="y-divider" style="margin:10px 0"></div>
+      <div class="y-between" style="padding:6px 0"><div><strong style="font-size:14px">肩颈舒缓 Flow</strong><div class="y-caption">今天 19:00 · 教室 A</div></div><span class="y-chip y-chip-success">剩 3 位</span></div>
+      <div class="y-divider" style="margin:8px 0"></div>
+      <div class="y-between" style="padding:6px 0"><div><strong style="font-size:14px">产后修复 · 私教</strong><div class="y-caption">可预约 · 1v1</div></div><span class="y-chip">¥680/节</span></div>
+      <div class="y-divider" style="margin:8px 0"></div>
+      <div class="y-between" style="padding:6px 0"><div><strong style="font-size:14px">体态评估</strong><div class="y-caption">到店 30 分钟 · 含报告</div></div><span class="y-chip y-chip-brand">体验 ¥39</span></div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-between"><h3 style="font-size:15px;font-weight:600">学员评价</h3><span class="y-caption">128 条</span></div>
+      <div class="review">
+        <img class="y-avatar sm" src="https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=120&q=80" alt="V">
+        <div style="flex:1;min-width:0">
+          <div class="y-between"><strong style="font-size:13px">Vivian</strong><span class="y-caption">3 天前</span></div>
+          <p style="font-size:13px;color:var(--y-ink-600);margin-top:4px;line-height:1.6">Anna 老师会记住每个学员的身体状况，特别专业。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sub-sticky">
+    <button class="y-btn y-btn-outline y-btn-lg" style="flex:1"><svg class="y-icon"><use href="#phone"/></svg>咨询</button>
+    <button class="y-btn y-btn-primary y-btn-lg" style="flex:1.6" onclick="go('course')">约她的课</button>
+  </div>
+</section>
+
+<!-- ================= 商品详情（三级） ================= -->
+<section class="screen" id="p-product">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('course')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>商品详情</h1>
+    <div class="right"><svg class="y-icon"><use href="#more"/></svg></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div style="padding:0 16px">
+    <div style="border-radius:12px;overflow:hidden;position:relative;margin-top:12px">
+      <img src="https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?auto=format&fit=crop&w=900&q=85" alt="瑜伽垫" style="width:100%;aspect-ratio:4/3;object-fit:cover">
+      <span class="y-chip y-chip-brand" style="position:absolute;top:10px;left:10px;z-index:2">训练推荐</span>
+    </div>
+    <div class="y-between" style="margin-top:12px">
+      <div>
+        <h2 style="font-size:20px;font-weight:700;letter-spacing:-.01em">专业防滑瑜伽垫 6mm</h2>
+        <div class="y-row" style="gap:6px;margin-top:6px">
+          <span class="y-status" style="color:var(--y-ink-600)"><svg class="y-icon" style="width:13px;height:13px;color:var(--y-brand-600)"><use href="#star"/></svg>4.9</span>
+          <span class="y-caption">已售 2.3k 件</span>
+        </div>
+      </div>
+      <span class="y-chip y-chip-outline"><svg class="y-icon"><use href="#heart"/></svg>收藏</span>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:12px">
+      <div class="y-between"><span class="y-caption">价格</span><span class="y-price" style="font-size:22px"><span class="yen">¥</span>299</span></div>
+      <div class="y-divider" style="margin:10px 0"></div>
+      <div class="y-between"><span class="y-caption">会员专享</span><strong style="color:var(--y-brand-800)">¥269 · 再送 2 次课积分</strong></div>
+      <div class="y-divider" style="margin:10px 0"></div>
+      <div class="y-col" style="gap:10px">
+        <div class="y-between"><span class="y-caption">颜色</span><button class="y-btn y-btn-sm y-btn-outline"><svg class="y-icon" style="width:13px;height:13px"><use href="#chevron-down"/></svg>燕麦白</button></div>
+        <div class="y-between"><span class="y-caption">尺寸</span>
+          <div class="sku-grid" style="width:60%">
+            <button class="sku on">183×61</button>
+            <button class="sku">183×66</button>
+            <button class="sku">203×61</button>
+          </div>
+        </div>
+        <div class="y-between"><span class="y-caption">数量</span>
+          <div class="y-stepper">
+            <button><svg class="y-icon"><use href="#minus"/></svg></button>
+            <b>1</b>
+            <button><svg class="y-icon"><use href="#plus"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:8px">商品详情</h3>
+      <p style="font-size:13px;color:var(--y-ink-600);line-height:1.7">TPE 环保材质，双面防滑纹理，6mm 加厚缓冲。出汗不打滑，适合流瑜伽与力量训练。支持机洗，附赠收纳袋。</p>
+      <div class="tag-list" style="margin-top:10px">
+        <span class="y-chip">TPE 环保</span>
+        <span class="y-chip">双面防滑</span>
+        <span class="y-chip">6mm 加厚</span>
+      </div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:8px">配送说明</h3>
+      <div class="fee-row"><span style="color:var(--y-ink-500)">配送</span><span>¥6 · 满 99 包邮</span></div>
+      <div class="fee-row"><span style="color:var(--y-ink-500)">发货</span><span>48 小时内</span></div>
+      <div class="fee-row"><span style="color:var(--y-ink-500)">退换</span><span>7 天无理由</span></div>
+    </div>
+  </div>
+  <div class="sub-sticky">
+    <button class="y-btn y-btn-icon y-btn-outline" style="height:46px;width:46px" aria-label="购物车"><svg class="y-icon"><use href="#cart"/></svg></button>
+    <button class="y-btn y-btn-secondary y-btn-lg" style="flex:1" onclick="go('pay')">加入购物车</button>
+    <button class="y-btn y-btn-primary y-btn-lg" style="flex:1.2" onclick="go('pay')">立即购买</button>
+  </div>
+</section><!-- ================= 支付确认（三级） ================= -->
+<section class="screen" id="p-pay">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('product')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>确认订单</h1>
+    <div class="right"></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div style="padding:12px 16px 0">
+    <div class="y-card y-card-pad">
+      <div class="y-row">
+        <img src="https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?auto=format&fit=crop&w=200&q=80" alt="瑜伽垫" style="width:64px;height:64px;border-radius:8px;object-fit:cover;flex:none">
+        <div class="y-grow">
+          <strong style="font-size:14px">专业防滑瑜伽垫 6mm</strong>
+          <div class="y-caption" style="margin-top:2px">燕麦白 · 183×61 · x1</div>
+        </div>
+        <span class="y-price" style="font-size:16px"><span class="yen">¥</span>299</span>
+      </div>
+      <div class="y-divider" style="margin:12px 0"></div>
+      <div class="y-between"><span class="y-caption">配送方式</span><strong style="font-size:13px">快递 · 满 99 包邮</strong></div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-between"><h3 style="font-size:15px;font-weight:600">支付方式</h3><span class="y-chip y-chip-outline">可开发票</span></div>
+      <div class="y-divider" style="margin:10px 0"></div>
+      <label class="y-radio" style="width:100%;padding:8px 0">
+        <input type="radio" name="pay" checked>
+        <span class="y-radio-box"></span>
+        <span class="y-list-icon success" style="width:30px;height:30px;border-radius:8px"><svg class="y-icon" style="width:16px;height:16px"><use href="#wallet"/></svg></span>
+        <span style="flex:1;font-weight:600">微信支付</span>
+        <span class="y-caption">推荐</span>
+      </label>
+      <label class="y-radio" style="width:100%;padding:8px 0">
+        <input type="radio" name="pay">
+        <span class="y-radio-box"></span>
+        <span class="y-list-icon" style="width:30px;height:30px;border-radius:8px"><svg class="y-icon" style="width:16px;height:16px"><use href="#card"/></svg></span>
+        <span style="flex:1;font-weight:600">银行卡</span>
+        <span class="y-caption">支持储蓄卡</span>
+      </label>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-between"><span class="y-caption">优惠券</span><span style="color:var(--y-brand-800);font-weight:600;font-size:13px">-¥30 会员专享券</span></div>
+      <div class="y-divider" style="margin:10px 0"></div>
+      <div class="fee-row"><span style="color:var(--y-ink-500)">商品金额</span><span>¥299</span></div>
+      <div class="fee-row"><span style="color:var(--y-ink-500)">运费</span><span style="color:var(--y-success)">免运费</span></div>
+      <div class="fee-row"><span style="color:var(--y-ink-500)">优惠</span><span style="color:var(--y-danger)">-¥30</span></div>
+      <div class="fee-row total"><span style="font-weight:600">实付</span><strong style="color:var(--y-ink-950)">¥269</strong></div>
+    </div>
+    <label class="y-check" style="margin-top:12px"><input type="checkbox" checked><span class="y-check-box"><svg class="y-icon"><use href="#check"/></svg></span>已阅读并同意《购买协议》与《售后规则》</label>
+  </div>
+  <div class="sub-sticky">
+    <div class="y-grow">
+      <div class="y-caption">实付</div>
+      <div class="y-price" style="font-size:20px"><span class="yen">¥</span>269</div>
+    </div>
+    <button class="y-btn y-btn-primary y-btn-lg" style="flex:1" onclick="toast('支付成功，订单已生成')">确认支付</button>
+  </div>
+</section>
+
+<!-- ================= 订单详情（三级） ================= -->
+<section class="screen" id="p-order">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('pay')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>订单详情</h1>
+    <div class="right"></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div style="padding:12px 16px 0">
+    <div class="y-card y-card-pad">
+      <div class="y-between"><h3 style="font-size:15px;font-weight:600">订单状态</h3><span class="y-status" style="color:var(--y-success)"><i class="y-dot"></i>已完成</span></div>
+      <div class="y-timeline" style="margin-top:12px">
+        <div class="y-tl-item brand"><div class="y-tl-title">已完成<span class="y-tl-tag">08-19 15:42</span></div><div class="y-tl-sub">商品已签收，感谢购买</div></div>
+        <div class="y-tl-item"><div class="y-tl-title">配送中<span class="y-tl-tag">08-18 10:30</span></div><div class="y-tl-sub">顺丰速运 · 单号 SF-8842 9210</div></div>
+        <div class="y-tl-item success"><div class="y-tl-title">已支付<span class="y-tl-tag">08-16 20:12</span></div><div class="y-tl-sub">微信支付 · ¥269</div></div>
+        <div class="y-tl-item"><div class="y-tl-title">订单创建<span class="y-tl-tag">08-16 20:10</span></div><div class="y-tl-sub">订单号 #2026081620108</div></div>
+      </div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-row">
+        <img src="https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?auto=format&fit=crop&w=200&q=80" alt="瑜伽垫" style="width:56px;height:56px;border-radius:8px;object-fit:cover;flex:none">
+        <div class="y-grow">
+          <strong style="font-size:14px">专业防滑瑜伽垫 6mm</strong>
+          <div class="y-caption" style="margin-top:2px">燕麦白 · 183×61 · x1</div>
+        </div>
+        <span class="y-price" style="font-size:15px"><span class="yen">¥</span>269</span>
+      </div>
+      <div class="y-divider" style="margin:12px 0"></div>
+      <div class="fee-row"><span style="color:var(--y-ink-500)">商品金额</span><span>¥299</span></div>
+      <div class="fee-row"><span style="color:var(--y-ink-500)">优惠</span><span style="color:var(--y-danger)">-¥30</span></div>
+      <div class="fee-row total"><span style="font-weight:600">实付</span><strong>¥269</strong></div>
+      <div class="y-divider" style="margin:12px 0"></div>
+      <div class="y-between"><span class="y-caption">支付方式</span><span style="font-size:13px">微信支付</span></div>
+      <div class="y-divider" style="margin:10px 0"></div>
+      <div class="y-between"><span class="y-caption">配送地址</span><span style="font-size:13px;text-align:right">北京市朝阳区望京 SOHO T1<br>Mia 138****0000</span></div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-row">
+        <span class="y-list-icon info"><svg class="y-icon"><use href="#receipt"/></svg></span>
+        <div class="y-grow">
+          <strong style="font-size:14px">发票与凭证</strong>
+          <div class="y-caption">电子发票可在线申请</div>
+        </div>
+        <span class="y-list-arrow"><svg class="y-icon"><use href="#chevron-right"/></svg></span>
+      </div>
+    </div>
+  </div>
+  <div class="sub-sticky">
+    <button class="y-btn y-btn-outline y-btn-lg" style="flex:1"><svg class="y-icon"><use href="#phone"/></svg>联系客服</button>
+    <button class="y-btn y-btn-outline y-btn-lg" style="flex:1" onclick="go('after')"><svg class="y-icon"><use href="#trash"/></svg>申请售后</button>
+    <button class="y-btn y-btn-primary y-btn-lg" style="flex:1.4" onclick="go('product')">再次购买</button>
+  </div>
+</section>
+
+<!-- ================= 售后申请（四级） ================= -->
+<section class="screen" id="p-after">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('order')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>申请售后</h1>
+    <div class="right"></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div style="padding:12px 16px 0">
+    <div class="y-inline y-inline-info"><svg class="y-icon"><use href="#info"/></svg>订单已完成 21 天，7 天无理由期内可退，超期仅支持质量问题售后</div>
+    <div class="y-card y-card-pad" style="margin-top:12px">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:10px">售后类型</h3>
+      <div class="y-col" style="gap:8px">
+        <label class="y-radio" style="width:100%"><input type="radio" name="af" checked><span class="y-radio-box"></span><span style="flex:1">退款</span><span class="y-caption">退回 ¥269</span></label>
+        <label class="y-radio" style="width:100%"><input type="radio" name="af"><span class="y-radio-box"></span><span style="flex:1">退货退款</span><span class="y-caption">寄回后处理</span></label>
+        <label class="y-radio" style="width:100%"><input type="radio" name="af"><span class="y-radio-box"></span><span style="flex:1">仅换货</span><span class="y-caption">质量问题</span></label>
+      </div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:10px">申请原因</h3>
+      <div class="sku-grid">
+        <button class="sku on">质量问题</button>
+        <button class="sku">不想要了</button>
+        <button class="sku">买错了</button>
+        <button class="sku">与描述不符</button>
+        <button class="sku">发错货</button>
+        <button class="sku">其他</button>
+      </div>
+      <label class="y-field" style="margin-top:14px">
+        <span class="y-field-label">问题描述（选填）</span>
+        <textarea class="y-input y-textarea" placeholder="请描述具体情况，便于快速处理…"></textarea>
+      </label>
+      <div style="margin-top:14px">
+        <span class="y-field-label" style="display:block;font-size:12px;color:var(--y-ink-600);margin-bottom:8px;font-weight:500">凭证图片</span>
+        <button class="y-btn y-btn-dashed" style="width:72px;height:72px;border:1px dashed var(--y-border-strong);border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--y-ink-400);background:var(--y-surface-2)"><svg class="y-icon" style="width:18px;height:18px"><use href="#camera"/></svg><span style="font-size:10px">上传</span></button>
+      </div>
+    </div>
+  </div>
+  <div class="sub-sticky">
+    <div class="y-grow">
+      <div class="y-caption">退款金额</div>
+      <div class="y-price" style="font-size:20px"><span class="yen">¥</span>269</div>
+    </div>
+    <button class="y-btn y-btn-primary y-btn-lg" style="flex:1" onclick="toast('售后申请已提交')">提交申请</button>
+  </div>
+</section>
+
+<!-- ================= 权益详情（二级） ================= -->
+<section class="screen" id="p-member">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('course')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>会员权益</h1>
+    <div class="right"></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div style="padding:12px 16px 0">
+    <div class="y-member">
+      <div class="y-member-top">
+        <div>
+          <div class="y-caption" style="color:#A9A49A">YOGA PASS · 年卡</div>
+          <div class="y-member-name" style="margin-top:6px">Yoga Pass 年卡</div>
+        </div>
+        <span class="y-chip y-chip-brand">正常</span>
+      </div>
+      <div class="y-member-row" style="margin-top:14px">
+        <span style="font-size:13px;color:#A9A49A">剩余</span>
+        <span class="y-member-num">18</span>
+        <span style="font-size:13px;color:#A9A49A">次</span>
+        <span style="margin-left:auto;font-size:12px;color:#A9A49A">已用 46 / 64</span>
+      </div>
+      <div class="y-progress y-progress-dark" style="margin-top:10px"><span style="width:72%"></span></div>
+      <div class="y-member-line"></div>
+      <div class="y-member-foot" style="margin-top:0">
+        <span>到期 <strong>2027-08-30</strong></span>
+        <span>来源 <strong>订单 #2026080110002</strong></span>
+      </div>
+      <svg class="y-icon y-lotus"><use href="#lotus"/></svg>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <h3 style="font-size:15px;font-weight:600;margin-bottom:6px">权益说明</h3>
+      <p style="font-size:13px;color:var(--y-ink-600);line-height:1.7">年卡包含 64 次团课 / 精品小班，每次签到核销 1 次。支持开课前 2 小时免费取消，超时扣 1 次。附赠会员商城折扣与积分加速。</p>
+      <div class="tag-list" style="margin-top:10px">
+        <span class="y-chip y-chip-brand">团课</span>
+        <span class="y-chip y-chip-brand">精品小班</span>
+        <span class="y-chip">商城 9.5 折</span>
+        <span class="y-chip">积分 ×1.5</span>
+      </div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-between"><h3 style="font-size:15px;font-weight:600">使用流水</h3><button class="y-link">全部 46 条<svg class="y-icon"><use href="#chevron-right"/></svg></button></div>
+      <div class="y-timeline" style="margin-top:10px">
+        <div class="y-tl-item brand"><div class="y-tl-title">签到核销 · 肩颈舒缓 Flow<span class="y-tl-tag">08-19</span></div><div class="y-tl-sub">-1 次 · 教室 A</div></div>
+        <div class="y-tl-item success"><div class="y-tl-title">签到核销 · 核心唤醒 Core<span class="y-tl-tag">08-17</span></div><div class="y-tl-sub">-1 次 · 教室 B</div></div>
+        <div class="y-tl-item"><div class="y-tl-title">取消预约 · 流动拉伸<span class="y-tl-tag">08-15</span></div><div class="y-tl-sub">已返还 1 次</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="sub-sticky">
+    <button class="y-btn y-btn-outline y-btn-lg" style="flex:1">使用流水</button>
+    <button class="y-btn y-btn-primary y-btn-lg" style="flex:1.4" onclick="toast('已加入续费提醒')">续费提醒</button>
+  </div>
+</section><!-- ================= 数字课程（二级） ================= -->
+<section class="screen" id="p-lesson">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('member')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>21 天柔韧训练</h1>
+    <div class="right"></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div style="padding:12px 16px 0">
+    <div class="player">
+      <img src="https://images.unsplash.com/photo-1599447421416-3414500d18a5?auto=format&fit=crop&w=900&q=85" alt="课程封面">
+      <span class="y-chip y-chip-brand" style="position:absolute;top:10px;left:10px;z-index:2">第 14 天 · 髋部打开</span>
+      <div class="pl-bar"><i></i></div>
+      <div class="pl"><span>18:24</span><span style="color:var(--y-brand-500);font-weight:600">48:12</span></div>
+      <button class="pp" aria-label="播放/暂停"><svg class="y-icon"><use href="#play"/></svg></button>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:12px">
+      <h2 style="font-size:18px;font-weight:700;letter-spacing:-.01em">髋部打开序列 · Day 14</h2>
+      <div class="y-row" style="gap:6px;margin-top:8px">
+        <span class="y-chip y-chip-success"><svg class="y-icon"><use href="#check-circle"/></svg>已完成打卡</span>
+        <span class="y-chip"><svg class="y-icon"><use href="#flame"/></svg>连续 6 天</span>
+        <span class="y-chip"><svg class="y-icon"><use href="#timer"/></svg>24 分钟</span>
+      </div>
+      <div class="y-inline y-inline-info" style="margin-top:12px"><svg class="y-icon"><use href="#sparkle"/></svg>本序列针对久坐人群，睡前练习效果更佳</div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-between"><h3 style="font-size:15px;font-weight:600">课程章节</h3><button class="y-link" onclick="toast('已开启循环播放')"><svg class="y-icon"><use href="#repeat"/></svg>循环</button></div>
+      <div style="margin-top:4px">
+        <div class="lesson cur">
+          <span class="no">14</span>
+          <div class="y-grow"><strong style="font-size:13px">髋部打开序列</strong><div class="y-caption">24 分钟 · 初级</div></div>
+          <button class="y-btn y-btn-icon y-btn-secondary" style="width:30px;height:30px" aria-label="播放"><svg class="y-icon" style="width:15px;height:15px"><use href="#play"/></svg></button>
+        </div>
+        <div class="lesson done">
+          <span class="no">13</span>
+          <div class="y-grow"><strong style="font-size:13px">肩背放松序列</strong><div class="y-caption">26 分钟 · 初级</div></div>
+          <svg class="y-icon" style="width:16px;height:16px;color:var(--y-success)"><use href="#check"/></svg>
+        </div>
+        <div class="lesson done">
+          <span class="no">12</span>
+          <div class="y-grow"><strong style="font-size:13px">腿部拉伸序列</strong><div class="y-caption">22 分钟 · 初级</div></div>
+          <svg class="y-icon" style="width:16px;height:16px;color:var(--y-success)"><use href="#check"/></svg>
+        </div>
+        <div class="lesson">
+          <span class="no">15</span>
+          <div class="y-grow"><strong style="font-size:13px">脊柱流动序列</strong><div class="y-caption">明日解锁 · 25 分钟</div></div>
+          <svg class="y-icon" style="width:16px;height:16px;color:var(--y-ink-300)"><use href="#lock"/></svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 训练记录（二级） ================= -->
+<section class="screen" id="p-record">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('lesson')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>训练记录</h1>
+    <div class="right"></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div style="padding:12px 16px 0">
+    <div class="y-kpis four">
+      <div class="y-kpi"><div class="y-kpi-label">本月次数</div><div class="y-kpi-value" style="font-size:18px">12</div></div>
+      <div class="y-kpi"><div class="y-kpi-label">总时长</div><div class="y-kpi-value" style="font-size:18px">14h</div></div>
+      <div class="y-kpi"><div class="y-kpi-label">消耗</div><div class="y-kpi-value" style="font-size:18px">4.6k</div></div>
+      <div class="y-kpi"><div class="y-kpi-label">连续天数</div><div class="y-kpi-value" style="font-size:18px;color:var(--y-brand-800)">6</div></div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-between"><h3 style="font-size:15px;font-weight:600">训练趋势</h3><span class="y-chip y-chip-warning"><svg class="y-icon"><use href="#trend-down"/></svg>本周较上周 -2</span></div>
+      <div style="display:flex;align-items:flex-end;gap:8px;height:96px;margin-top:14px">
+        <div style="flex:1;background:var(--y-brand-tint);border-radius:4px 4px 0 0;height:70%"></div>
+        <div style="flex:1;background:var(--y-brand-tint);border-radius:4px 4px 0 0;height:45%"></div>
+        <div style="flex:1;background:var(--y-brand-tint);border-radius:4px 4px 0 0;height:85%"></div>
+        <div style="flex:1;background:var(--y-brand-tint);border-radius:4px 4px 0 0;height:60%"></div>
+        <div style="flex:1;background:var(--y-brand-500);border-radius:4px 4px 0 0;height:100%"></div>
+        <div style="flex:1;background:var(--y-brand-tint);border-radius:4px 4px 0 0;height:35%"></div>
+      </div>
+      <p class="y-caption" style="margin-top:8px">近 6 周 · 保持每周 3 次以上</p>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-between"><h3 style="font-size:15px;font-weight:600">成就</h3><span class="y-caption">3 / 8 已解锁</span></div>
+      <div class="h-scroll" style="display:flex;gap:10px;margin-top:12px;overflow-x:auto;padding-bottom:2px">
+        <div style="flex:none;width:92px;text-align:center">
+          <div style="width:52px;height:52px;margin:0 auto;border-radius:50%;background:var(--y-brand-tint);color:var(--y-brand-800);display:flex;align-items:center;justify-content:center"><svg class="y-icon" style="width:24px;height:24px"><use href="#trophy"/></svg></div>
+          <strong style="font-size:11px;display:block;margin-top:6px">连续 7 天</strong>
+          <span class="y-caption">已解锁</span>
+        </div>
+        <div style="flex:none;width:92px;text-align:center">
+          <div style="width:52px;height:52px;margin:0 auto;border-radius:50%;background:var(--y-surface-3);color:var(--y-ink-400);display:flex;align-items:center;justify-content:center"><svg class="y-icon" style="width:24px;height:24px"><use href="#flame"/></svg></div>
+          <strong style="font-size:11px;display:block;margin-top:6px;color:var(--y-ink-500)">累计 100 次</strong>
+          <span class="y-caption">85 / 100</span>
+        </div>
+        <div style="flex:none;width:92px;text-align:center">
+          <div style="width:52px;height:52px;margin:0 auto;border-radius:50%;background:var(--y-surface-3);color:var(--y-ink-400);display:flex;align-items:center;justify-content:center"><svg class="y-icon" style="width:24px;height:24px"><use href="#sun"/></svg></div>
+          <strong style="font-size:11px;display:block;margin-top:6px;color:var(--y-ink-500)">晨练 30 次</strong>
+          <span class="y-caption">18 / 30</span>
+        </div>
+      </div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-between"><h3 style="font-size:15px;font-weight:600">训练记录</h3><button class="y-link">筛选<svg class="y-icon"><use href="#filter"/></svg></button></div>
+      <div class="y-divider" style="margin:10px 0"></div>
+      <div class="y-between" style="padding:7px 0"><div><strong style="font-size:13px">肩颈舒缓 Flow</strong><div class="y-caption">08-19 19:00 · 教室 A</div></div><span class="y-chip y-chip-brand">-1 次</span></div>
+      <div class="y-divider" style="margin:8px 0"></div>
+      <div class="y-between" style="padding:7px 0"><div><strong style="font-size:13px">髋部打开序列 · Day14</strong><div class="y-caption">08-19 22:10 · 线上</div></div><span class="y-chip y-chip-success">完成</span></div>
+      <div class="y-divider" style="margin:8px 0"></div>
+      <div class="y-between" style="padding:7px 0"><div><strong style="font-size:13px">核心唤醒 Core Flow</strong><div class="y-caption">08-17 18:30 · 教室 B</div></div><span class="y-chip y-chip-brand">-1 次</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 优惠券（三级） ================= -->
+<section class="screen" id="p-coupon">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('record')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>优惠券</h1>
+    <div class="right"></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div style="padding:12px 16px 0">
+    <div class="y-tabs">
+      <button class="y-tab active">可用 2</button>
+      <button class="y-tab">已用 6</button>
+      <button class="y-tab">已过期 3</button>
+    </div>
+    <div style="margin-top:12px">
+      <div class="y-card" style="display:flex;overflow:hidden">
+        <div style="background:var(--y-brand-500);width:84px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--y-brand-on);flex:none">
+          <span style="font-size:20px;font-weight:800"><small style="font-size:12px">¥</small>30</span>
+          <span style="font-size:10px;font-weight:600">会员专享</span>
+        </div>
+        <div style="flex:1;padding:12px 14px">
+          <strong style="font-size:14px">商城满 99 减 30</strong>
+          <div class="y-caption" style="margin-top:3px">全场商品可用 · 08-31 到期</div>
+          <div class="y-row" style="margin-top:8px"><span class="y-chip y-chip-brand">新用户</span><span class="y-chip">商城</span></div>
+        </div>
+        <div style="display:flex;align-items:center;padding-right:14px"><button class="y-btn y-btn-primary y-btn-sm">去使用</button></div>
+      </div>
+      <div class="y-card" style="display:flex;overflow:hidden;margin-top:10px">
+        <div style="background:var(--y-success);width:84px;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#fff;flex:none">
+          <span style="font-size:20px;font-weight:800">2<small style="font-size:12px">次</small></span>
+          <span style="font-size:10px;font-weight:600">体验课</span>
+        </div>
+        <div style="flex:1;padding:12px 14px">
+          <strong style="font-size:14px">新手体验课 2 次</strong>
+          <div class="y-caption" style="margin-top:3px">到店体验 · 含体态评估 · 12-31 到期</div>
+          <div class="y-row" style="margin-top:8px"><span class="y-chip">新用户</span></div>
+        </div>
+        <div style="display:flex;align-items:center;padding-right:14px"><button class="y-btn y-btn-primary y-btn-sm">去预约</button></div>
+      </div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:12px">
+      <div class="y-row">
+        <span class="y-list-icon success"><svg class="y-icon"><use href="#refresh"/></svg></span>
+        <div class="y-grow">
+          <strong style="font-size:14px">兑换优惠券</strong>
+          <div class="y-caption">输入兑换码即可领取</div>
+        </div>
+        <button class="y-btn y-btn-outline y-btn-sm">兑换</button>
+      </div>
+    </div>
+  </div>
+</section><!-- ================= 消息中心（二级） ================= -->
+<section class="screen" id="p-msg">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('coupon')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>消息中心</h1>
+    <div class="right"><svg class="y-icon"><use href="#check-circle"/></svg></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div style="padding:12px 16px 0">
+    <div class="y-tabs">
+      <button class="y-tab active">全部</button>
+      <button class="y-tab">预约 2</button>
+      <button class="y-tab">订单</button>
+      <button class="y-tab">训练</button>
+      <button class="y-tab">系统</button>
+    </div>
+    <div style="margin-top:8px">
+      <div class="msg">
+        <span class="ic" style="background:var(--y-brand-tint);color:var(--y-brand-800)"><svg class="y-icon"><use href="#calendar-check"/></svg></span>
+        <div class="y-grow">
+          <div class="y-between"><strong style="font-size:14px">预约提醒</strong><span class="y-caption">刚刚</span></div>
+          <p style="font-size:12px;color:var(--y-ink-500);margin-top:3px;line-height:1.6">明晚 19:00「肩颈舒缓 Flow」即将开始，教室 A · Anna 老师，记得提前 10 分钟到店签到。</p>
+          <button class="y-btn y-btn-outline y-btn-sm" style="margin-top:8px" onclick="go('course')">查看课程</button>
+        </div>
+      </div>
+      <div class="msg">
+        <span class="ic" style="background:var(--y-success-bg);color:var(--y-success)"><svg class="y-icon"><use href="#truck"/></svg></span>
+        <div class="y-grow">
+          <div class="y-between"><strong style="font-size:14px">物流通知</strong><span class="y-caption">2 小时前</span></div>
+          <p style="font-size:12px;color:var(--y-ink-500);margin-top:3px;line-height:1.6">你的瑜伽垫已签收，欢迎评价。若商品有质量问题可随时申请售后。</p>
+          <button class="y-btn y-btn-outline y-btn-sm" style="margin-top:8px" onclick="go('order')">查看订单</button>
+        </div>
+      </div>
+      <div class="msg">
+        <span class="ic" style="background:var(--y-danger-bg);color:var(--y-danger)"><svg class="y-icon"><use href="#alert"/></svg></span>
+        <div class="y-grow">
+          <div class="y-between"><strong style="font-size:14px">权益提醒</strong><span class="y-caption">昨天</span></div>
+          <p style="font-size:12px;color:var(--y-ink-500);margin-top:3px;line-height:1.6">你的 Yoga Pass 年卡将于 8 月 30 日到期，剩余 18 次。续费可保留积分与会员折扣。</p>
+          <button class="y-btn y-btn-outline y-btn-sm" style="margin-top:8px" onclick="go('member')">查看权益</button>
+        </div>
+      </div>
+      <div class="msg">
+        <span class="ic" style="background:var(--y-info-bg);color:var(--y-info)"><svg class="y-icon"><use href="#sparkle"/></svg></span>
+        <div class="y-grow">
+          <div class="y-between"><strong style="font-size:14px">训练推荐</strong><span class="y-caption">08-18</span></div>
+          <p style="font-size:12px;color:var(--y-ink-500);margin-top:3px;line-height:1.6">检测到你连续 5 天打卡，为你推荐「髋部打开序列」第 14 天，今晚练更放松。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 设置（二级） ================= -->
+<section class="screen" id="p-settings">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('msg')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>设置</h1>
+    <div class="right"></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div style="padding:12px 16px 0">
+    <div class="y-card">
+      <div class="y-list">
+        <div class="y-list-item">
+          <span class="y-list-icon"><svg class="y-icon"><use href="#user"/></svg></span>
+          <div class="y-list-main"><div class="y-list-title">个人资料</div><div class="y-list-sub">头像 · 昵称 · 手机号</div></div>
+          <span class="y-list-value" style="font-size:12px;color:var(--y-ink-400)">Mia</span>
+          <span class="y-list-arrow"><svg class="y-icon"><use href="#chevron-right"/></svg></span>
+        </div>
+        <div class="y-list-item">
+          <span class="y-list-icon"><svg class="y-icon"><use href="#edit"/></svg></span>
+          <div class="y-list-main"><div class="y-list-title">身体数据</div><div class="y-list-sub">身高 · 体重 · 训练目标</div></div>
+          <span class="y-list-arrow"><svg class="y-icon"><use href="#chevron-right"/></svg></span>
+        </div>
+        <div class="y-list-item">
+          <span class="y-list-icon info"><svg class="y-icon"><use href="#flag"/></svg></span>
+          <div class="y-list-main"><div class="y-list-title">训练目标</div><div class="y-list-sub">当前：柔韧进阶</div></div>
+          <span class="y-list-arrow"><svg class="y-icon"><use href="#chevron-right"/></svg></span>
+        </div>
+      </div>
+    </div>
+    <div class="y-card" style="margin-top:10px">
+      <div class="y-list">
+        <div class="y-list-item">
+          <span class="y-list-icon"><svg class="y-icon"><use href="#bell"/></svg></span>
+          <div class="y-list-main"><div class="y-list-title">上课提醒</div><div class="y-list-sub">开课前 1 小时推送</div></div>
+          <button class="y-switch on" role="switch" aria-checked="true"></button>
+        </div>
+        <div class="y-list-item">
+          <span class="y-list-icon"><svg class="y-icon"><use href="#calendar"/></svg></span>
+          <div class="y-list-main"><div class="y-list-title">签到提醒</div><div class="y-list-sub">到店 200m 内提醒</div></div>
+          <button class="y-switch on" role="switch" aria-checked="true"></button>
+        </div>
+        <div class="y-list-item">
+          <span class="y-list-icon"><svg class="y-icon"><use href="#repeat"/></svg></span>
+          <div class="y-list-main"><div class="y-list-title">训练打卡推送</div><div class="y-list-sub">每日 20:00 提醒</div></div>
+          <button class="y-switch" role="switch" aria-checked="false"></button>
+        </div>
+      </div>
+    </div>
+    <div class="y-card" style="margin-top:10px">
+      <div class="y-list">
+        <div class="y-list-item">
+          <span class="y-list-icon"><svg class="y-icon"><use href="#shield"/></svg></span>
+          <div class="y-list-main"><div class="y-list-title">隐私与安全</div><div class="y-list-sub">授权 · 账号与登录</div></div>
+          <span class="y-list-arrow"><svg class="y-icon"><use href="#chevron-right"/></svg></span>
+        </div>
+        <div class="y-list-item">
+          <span class="y-list-icon"><svg class="y-icon"><use href="#book"/></svg></span>
+          <div class="y-list-main"><div class="y-list-title">关于 Yoga</div><div class="y-list-sub">版本 3.2.0 · 服务协议</div></div>
+          <span class="y-list-arrow"><svg class="y-icon"><use href="#chevron-right"/></svg></span>
+        </div>
+        <div class="y-list-item" onclick="toast('缓存已清理')">
+          <span class="y-list-icon"><svg class="y-icon"><use href="#refresh"/></svg></span>
+          <div class="y-list-main"><div class="y-list-title">清理缓存</div><div class="y-list-sub">12.6 MB</div></div>
+          <span class="y-list-arrow"><svg class="y-icon"><use href="#chevron-right"/></svg></span>
+        </div>
+      </div>
+    </div>
+    <button class="y-btn y-btn-outline y-btn-lg y-btn-block" style="margin-top:16px;color:var(--y-danger);border-color:var(--y-danger-border)" onclick="toast('已退出登录')">退出登录</button>
+  </div>
+</section>
+
+<!-- ================= 签到码（四级） ================= -->
+<section class="screen" id="p-checkin">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('settings')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>到店签到</h1>
+    <div class="right"></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div style="padding:12px 16px 0;text-align:center">
+    <div class="y-card y-card-pad">
+      <div class="y-row" style="justify-content:center;gap:6px">
+        <span class="y-chip y-chip-brand"><svg class="y-icon"><use href="#calendar-check"/></svg>今晚 19:00</span>
+        <span class="y-chip">肩颈舒缓 Flow</span>
+      </div>
+      <div class="qrcode" style="margin-top:16px">
+        <svg class="y-icon"><use href="#scan"/></svg>
+      </div>
+      <p style="font-size:14px;font-weight:600;margin-top:14px">出示给前台扫码签到</p>
+      <p class="y-caption" style="margin-top:4px">签到后自动核销 1 次权益并累计积分</p>
+      <div class="y-divider" style="margin:14px 0 0"></div>
+      <div class="y-between" style="margin-top:10px">
+        <span class="y-caption">预约号</span>
+        <strong class="y-num">#0921-1900</strong>
+      </div>
+      <div class="y-between" style="margin-top:8px">
+        <span class="y-caption">教室</span>
+        <strong>教室 A · 2 楼</strong>
+      </div>
+      <div class="y-between" style="margin-top:8px">
+        <span class="y-caption">签到时间</span>
+        <strong>18:50 – 19:10</strong>
+      </div>
+      <div class="y-inline y-inline-warning" style="margin-top:14px;text-align:left"><svg class="y-icon"><use href="#alert"/></svg>超过签到时间仍未到店，将按门店规则处理</div>
+    </div>
+    <div class="y-row" style="justify-content:center;gap:8px;margin-top:16px">
+      <button class="y-btn y-btn-outline" style="flex:1" onclick="toast('已发送给微信客服')"><svg class="y-icon"><use href="#phone"/></svg>联系前台</button>
+      <button class="y-btn y-btn-outline" style="flex:1" onclick="toast('签到码已复制')"><svg class="y-icon"><use href="#edit"/></svg>复制预约号</button>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 购物车（二级） ================= -->
+<section class="screen" id="p-cart">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('product')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>购物车</h1>
+    <div class="right"><svg class="y-icon"><use href="#trash"/></svg></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div style="padding:12px 16px 0">
+    <div class="y-card y-card-pad">
+      <div class="y-between"><h3 style="font-size:15px;font-weight:600">商城商品</h3><span class="y-caption">2 件</span></div>
+      <div class="y-divider" style="margin:10px 0"></div>
+      <div class="y-row" style="padding:4px 0">
+        <label class="y-check"><input type="checkbox" checked><span class="y-check-box"><svg class="y-icon"><use href="#check"/></svg></span></label>
+        <img src="https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?auto=format&fit=crop&w=200&q=80" alt="瑜伽垫" style="width:60px;height:60px;border-radius:8px;object-fit:cover;flex:none">
+        <div class="y-grow">
+          <strong style="font-size:14px">专业防滑瑜伽垫 6mm</strong>
+          <div class="y-caption" style="margin-top:2px">燕麦白 · 183×61</div>
+          <div class="y-between" style="margin-top:6px"><span class="y-price" style="font-size:15px"><span class="yen">¥</span>299</span>
+            <div class="y-stepper">
+              <button><svg class="y-icon"><use href="#minus"/></svg></button>
+              <b>1</b>
+              <button><svg class="y-icon"><use href="#plus"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="y-divider" style="margin:10px 0"></div>
+      <div class="y-row" style="padding:4px 0">
+        <label class="y-check"><input type="checkbox" checked><span class="y-check-box"><svg class="y-icon"><use href="#check"/></svg></span></label>
+        <img src="https://images.unsplash.com/photo-1609793919430-8175e5e9e839?auto=format&fit=crop&w=200&q=80" alt="瑜伽砖" style="width:60px;height:60px;border-radius:8px;object-fit:cover;flex:none">
+        <div class="y-grow">
+          <strong style="font-size:14px">高密度瑜伽砖 2 只装</strong>
+          <div class="y-caption" style="margin-top:2px">软木色 · 标准</div>
+          <div class="y-between" style="margin-top:6px"><span class="y-price" style="font-size:15px"><span class="yen">¥</span>59</span>
+            <div class="y-stepper">
+              <button><svg class="y-icon"><use href="#minus"/></svg></button>
+              <b>2</b>
+              <button><svg class="y-icon"><use href="#plus"/></svg></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-row">
+        <span class="y-list-icon success"><svg class="y-icon"><use href="#coupon"/></svg></span>
+        <div class="y-grow"><strong style="font-size:14px">会员专享券</strong><div class="y-caption">满 99 减 30 · 可用</div></div>
+        <button class="y-btn y-btn-outline y-btn-sm">选择</button>
+      </div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-between"><span class="y-caption">配送至</span><strong style="font-size:13px">Mia · 138****0000</strong></div>
+      <div class="y-caption" style="margin-top:3px">北京市朝阳区望京 SOHO T1 15 层</div>
+      <button class="y-link" style="margin-top:8px" onclick="go('address')">更换地址<svg class="y-icon"><use href="#chevron-right"/></svg></button>
+    </div>
+  </div>
+  <div class="sub-sticky">
+    <label class="y-check" style="flex:none"><input type="checkbox" checked><span class="y-check-box"><svg class="y-icon"><use href="#check"/></svg></span><span style="font-size:13px">全选</span></label>
+    <div class="y-grow">
+      <div class="y-caption">合计</div>
+      <div class="y-price" style="font-size:20px"><span class="yen">¥</span>417</div>
+    </div>
+    <button class="y-btn y-btn-primary y-btn-lg" style="flex:1.2" onclick="go('pay')">去结算</button>
+  </div>
+</section>
+
+<!-- ================= 订单列表（二级） ================= -->
+<section class="screen" id="p-orders">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('order')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>我的订单</h1>
+    <div class="right"><svg class="y-icon"><use href="#search"/></svg></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div style="padding:12px 16px 0">
+    <div class="y-tabs">
+      <button class="y-tab active">全部</button>
+      <button class="y-tab">待支付</button>
+      <button class="y-tab">待上课</button>
+      <button class="y-tab">已完成</button>
+      <button class="y-tab">售后</button>
+    </div>
+    <div style="margin-top:10px">
+      <div class="y-card y-card-pad" onclick="go('order')">
+        <div class="y-between"><span class="y-caption">#2026081620108 · 08-16</span><span class="y-status" style="color:var(--y-success)"><i class="y-dot"></i>已完成</span></div>
+        <div class="y-divider" style="margin:10px 0"></div>
+        <div class="y-row">
+          <img src="https://images.unsplash.com/photo-1601925260368-ae2f83cf8b7f?auto=format&fit=crop&w=200&q=80" alt="瑜伽垫" style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex:none">
+          <div class="y-grow"><strong style="font-size:14px">专业防滑瑜伽垫 6mm</strong><div class="y-caption">燕麦白 · 183×61 · x1</div></div>
+          <span class="y-price" style="font-size:15px"><span class="yen">¥</span>269</span>
+        </div>
+        <div class="y-row" style="justify-content:flex-end;margin-top:10px">
+          <button class="y-btn y-btn-outline y-btn-sm">再次购买</button>
+          <button class="y-btn y-btn-outline y-btn-sm" style="margin-left:8px" onclick="go('after')">申请售后</button>
+        </div>
+      </div>
+      <div class="y-card y-card-pad" style="margin-top:10px">
+        <div class="y-between"><span class="y-caption">#2026081421003 · 08-14</span><span class="y-status" style="color:var(--y-warning)"><i class="y-dot"></i>待支付</span></div>
+        <div class="y-divider" style="margin:10px 0"></div>
+        <div class="y-row">
+          <img src="https://images.unsplash.com/photo-1609793919430-8175e5e9e839?auto=format&fit=crop&w=200&q=80" alt="瑜伽砖" style="width:52px;height:52px;border-radius:8px;object-fit:cover;flex:none">
+          <div class="y-grow"><strong style="font-size:14px">高密度瑜伽砖 2 只装</strong><div class="y-caption">软木色 · x2</div></div>
+          <span class="y-price" style="font-size:15px"><span class="yen">¥</span>118</span>
+        </div>
+        <div class="y-row" style="justify-content:flex-end;margin-top:10px">
+          <span class="y-caption" style="align-self:center;margin-right:10px">剩余 23:59 后自动取消</span>
+          <button class="y-btn y-btn-primary y-btn-sm" onclick="go('pay')">去支付</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 我的收藏（二级） ================= -->
+<section class="screen" id="p-fav">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('coupon')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>我的收藏</h1>
+    <div class="right"><svg class="y-icon"><use href="#trash"/></svg></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div style="padding:12px 16px 0">
+    <div class="y-tabs">
+      <button class="y-tab active">课程 3</button>
+      <button class="y-tab">商品 2</button>
+    </div>
+    <div style="margin-top:10px">
+      <div class="y-card y-card-pad" onclick="go('course')">
+        <div class="y-row">
+          <img src="https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?auto=format&fit=crop&w=300&q=80" alt="肩颈舒缓" style="width:74px;height:58px;border-radius:8px;object-fit:cover;flex:none">
+          <div class="y-grow">
+            <strong style="font-size:14px">肩颈舒缓 Flow</strong>
+            <div class="y-caption" style="margin-top:2px">今天 19:00 · 教室 A · 剩 3 位</div>
+            <div class="y-row" style="gap:6px;margin-top:4px"><span class="y-chip y-chip-brand" style="height:20px;font-size:10px;padding:0 6px">本周</span><span class="y-chip" style="height:20px;font-size:10px;padding:0 6px">¥39</span></div>
+          </div>
+          <span class="y-list-arrow"><svg class="y-icon"><use href="#chevron-right"/></svg></span>
+        </div>
+      </div>
+      <div class="y-card y-card-pad" style="margin-top:10px" onclick="go('coach')">
+        <div class="y-row">
+          <img class="y-avatar lg" src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80" alt="Anna">
+          <div class="y-grow">
+            <div class="y-row" style="gap:6px"><strong style="font-size:15px">Anna 老师</strong><span class="y-chip y-chip-brand" style="height:20px;font-size:10px;padding:0 6px">认证</span></div>
+            <div class="y-caption" style="margin-top:2px">肩颈改善专长 · 学员 320+</div>
+          </div>
+          <span class="y-list-arrow"><svg class="y-icon"><use href="#chevron-right"/></svg></span>
+        </div>
+      </div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:12px">
+      <div class="y-row">
+        <span class="y-list-icon"><svg class="y-icon"><use href="#heart"/></svg></span>
+        <div class="y-grow">
+          <strong style="font-size:14px">收藏的商品</strong>
+          <div class="y-caption">切换上方"商品"标签查看</div>
+        </div>
+        <button class="y-btn y-btn-outline y-btn-sm" onclick="go('product')">去看看</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 收货地址（三级） ================= -->
+<section class="screen" id="p-address">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('orders')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>收货地址</h1>
+    <div class="right"></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div style="padding:12px 16px 0">
+    <div class="y-card y-card-pad">
+      <div class="y-between"><strong style="font-size:14px">Mia</strong><span style="font-size:13px">138****0000</span></div>
+      <div class="y-caption" style="margin-top:3px">北京市朝阳区望京 SOHO T1 15 层 1508</div>
+      <div class="y-row" style="justify-content:space-between;margin-top:10px">
+        <span class="y-chip y-chip-brand" style="height:20px;font-size:10px;padding:0 6px">默认</span>
+        <div class="y-row" style="gap:8px"><button class="y-link" onclick="toast('地址已编辑')">编辑<svg class="y-icon"><use href="#edit"/></svg></button><button class="y-link" onclick="toast('地址已删除')">删除<svg class="y-icon"><use href="#trash"/></svg></button></div>
+      </div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-between"><strong style="font-size:14px">公司前台代收</strong><span style="font-size:13px">Kiki · 186****6622</span></div>
+      <div class="y-caption" style="margin-top:3px">北京市朝阳区阜通东大街 6 号院 3 号楼</div>
+      <div class="y-row" style="justify-content:space-between;margin-top:10px">
+        <span class="y-chip" style="height:20px;font-size:10px;padding:0 6px">公司</span>
+        <div class="y-row" style="gap:8px"><button class="y-link">编辑<svg class="y-icon"><use href="#edit"/></svg></button><button class="y-link">删除<svg class="y-icon"><use href="#trash"/></svg></button></div>
+      </div>
+    </div>
+  </div>
+  <div class="sub-sticky">
+    <button class="y-btn y-btn-primary y-btn-lg y-btn-block" onclick="toast('新增地址')"><svg class="y-icon"><use href="#plus"/></svg>新增收货地址</button>
+  </div>
+</section>
+<!-- ================= 个人资料（二级） ================= -->
+<section class="screen" id="p-profile">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('settings')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>个人资料</h1>
+    <div class="right"></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div style="padding:12px 16px 0">
+    <div class="y-card">
+      <div class="y-list">
+        <div class="y-list-item" style="padding:14px 16px">
+          <span class="y-list-icon"><svg class="y-icon"><use href="#camera"/></svg></span>
+          <div class="y-list-main"><div class="y-list-title">头像</div></div>
+          <img class="y-avatar" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80" alt="Mia">
+          <span class="y-list-arrow"><svg class="y-icon"><use href="#chevron-right"/></svg></span>
+        </div>
+        <div class="y-list-item">
+          <span class="y-list-icon"><svg class="y-icon"><use href="#edit"/></svg></span>
+          <div class="y-list-main"><div class="y-list-title">昵称</div></div>
+          <span class="y-list-value">Mia</span>
+          <span class="y-list-arrow"><svg class="y-icon"><use href="#chevron-right"/></svg></span>
+        </div>
+        <div class="y-list-item">
+          <span class="y-list-icon"><svg class="y-icon"><use href="#phone"/></svg></span>
+          <div class="y-list-main"><div class="y-list-title">手机号</div><div class="y-list-sub">138****0000 · 已验证</div></div>
+          <span class="y-list-arrow"><svg class="y-icon"><use href="#chevron-right"/></svg></span>
+        </div>
+      </div>
+    </div>
+    <div class="y-card" style="margin-top:10px">
+      <div class="y-list">
+        <div class="y-list-item">
+          <span class="y-list-icon"><svg class="y-icon"><use href="#user"/></svg></span>
+          <div class="y-list-main"><div class="y-list-title">性别</div></div>
+          <span class="y-list-value">女</span>
+          <span class="y-list-arrow"><svg class="y-icon"><use href="#chevron-right"/></svg></span>
+        </div>
+        <div class="y-list-item">
+          <span class="y-list-icon"><svg class="y-icon"><use href="#calendar"/></svg></span>
+          <div class="y-list-main"><div class="y-list-title">生日</div><div class="y-list-sub">填写后每月赠送生日礼券</div></div>
+          <span class="y-list-arrow"><svg class="y-icon"><use href="#chevron-right"/></svg></span>
+        </div>
+        <div class="y-list-item">
+          <span class="y-list-icon"><svg class="y-icon"><use href="#flag"/></svg></span>
+          <div class="y-list-main"><div class="y-list-title">训练目标</div><div class="y-list-sub">柔韧进阶 · 每周 3 次</div></div>
+          <span class="y-list-arrow"><svg class="y-icon"><use href="#chevron-right"/></svg></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="sub-sticky">
+    <button class="y-btn y-btn-primary y-btn-lg y-btn-block" onclick="toast('资料已保存')">保存资料</button>
+  </div>
+</section>
+
+<!-- ================= 训练任务详情（二级） ================= -->
+<section class="screen" id="p-task">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('record')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>今日任务</h1>
+    <div class="right"><svg class="y-icon"><use href="#more"/></svg></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div class="d-hero" style="min-height:200px">
+    <img src="https://images.unsplash.com/photo-1599447421416-3414500d18a5?auto=format&fit=crop&w=1200&q=85" alt="髋部打开序列">
+    <div class="d-hero-content">
+      <div class="chip-row">
+        <span class="y-chip y-chip-brand">柔韧进阶 · Day 14</span>
+        <span class="y-chip" style="background:rgba(255,255,255,.14);color:#F2F0EA">推荐 22:00 前完成</span>
+      </div>
+      <h2>髋部打开序列</h2>
+      <div class="meta">
+        <svg class="y-icon"><use href="#clock"/></svg>24 分钟
+        <svg class="y-icon"><use href="#flame"/></svg>约 180 kcal
+        <svg class="y-icon"><use href="#sun"/></svg>睡前练习更佳
+      </div>
+    </div>
+  </div>
+  <div style="padding:14px 16px 0">
+    <div class="y-card y-card-pad">
+      <div class="y-between"><h3 style="font-size:15px;font-weight:600">任务内容</h3><span class="y-chip y-chip-success"><svg class="y-icon"><use href="#check-circle"/></svg>已完成</span></div>
+      <div style="margin-top:6px">
+        <div class="y-divider" style="margin:8px 0"></div>
+        <div class="y-row" style="padding:5px 0"><span class="y-list-icon success" style="width:26px;height:26px;border-radius:6px"><svg class="y-icon" style="width:14px;height:14px"><use href="#check"/></svg></span><span style="flex:1;font-size:14px">完成髋部打开序列训练</span><span class="y-caption">✓ 24 分钟</span></div>
+        <div class="y-divider" style="margin:8px 0"></div>
+        <div class="y-row" style="padding:5px 0"><span class="y-list-icon success" style="width:26px;height:26px;border-radius:6px"><svg class="y-icon" style="width:14px;height:14px"><use href="#check"/></svg></span><span style="flex:1;font-size:14px">记录训练感受</span><span class="y-caption">✓ 已记录</span></div>
+        <div class="y-divider" style="margin:8px 0"></div>
+        <div class="y-row" style="padding:5px 0"><span class="y-list-icon" style="width:26px;height:26px;border-radius:6px"><svg class="y-icon" style="width:14px;height:14px"><use href="#check"/></svg></span><span style="flex:1;font-size:14px">分享到训练圈</span><span class="y-caption">+10 积分</span></div>
+      </div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-between"><h3 style="font-size:15px;font-weight:600">训练详情</h3><button class="y-link" onclick="go('lesson')">去训练<svg class="y-icon"><use href="#chevron-right"/></svg></button></div>
+      <div class="y-caption" style="margin-top:4px;line-height:1.6">共 4 组 · 每组 3 个动作 · 全程引导呼吸</div>
+      <div class="tag-list" style="margin-top:10px">
+        <span class="y-chip">坐姿髋部拉伸</span>
+        <span class="y-chip">鸽子式</span>
+        <span class="y-chip">半莲花</span>
+        <span class="y-chip">青蛙式</span>
+      </div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-between"><span class="y-caption">连续打卡</span><strong style="font-size:14px">6 天 <span style="color:var(--y-brand-800)">🔥</span></strong></div>
+      <div class="y-progress" style="margin-top:8px"><span style="width:60%"></span></div>
+      <p class="y-caption" style="margin-top:6px">再坚持 4 天解锁「连续 10 天」成就</p>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 打卡日历（二级） ================= -->
+<section class="screen" id="p-calendar">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('task')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>打卡日历</h1>
+    <div class="right"></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div style="padding:12px 16px 0">
+    <div class="y-kpis four">
+      <div class="y-kpi"><div class="y-kpi-label">本月打卡</div><div class="y-kpi-value" style="font-size:18px">12</div></div>
+      <div class="y-kpi"><div class="y-kpi-label">连续天数</div><div class="y-kpi-value" style="font-size:18px;color:var(--y-brand-800)">6</div></div>
+      <div class="y-kpi"><div class="y-kpi-label">累计天数</div><div class="y-kpi-value" style="font-size:18px">85</div></div>
+      <div class="y-kpi"><div class="y-kpi-label">完成率</div><div class="y-kpi-value" style="font-size:18px">86%</div></div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-between"><h3 style="font-size:15px;font-weight:600">2026 年 8 月</h3><div class="y-row" style="gap:4px"><button class="y-btn y-btn-icon y-btn-secondary" style="width:28px;height:28px"><svg class="y-icon" style="width:14px;height:14px"><use href="#chevron-right"/></svg></button></div></div>
+      <div class="day-row" style="margin-top:12px">
+        <div class="day"><span>一</span><b>18</b><svg class="y-icon" style="width:12px;height:12px;color:var(--y-success)"><use href="#check"/></svg></div>
+        <div class="day"><span>二</span><b>19</b><svg class="y-icon" style="width:12px;height:12px;color:var(--y-success)"><use href="#check"/></svg></div>
+        <div class="day"><span>三</span><b>20</b><svg class="y-icon" style="width:12px;height:12px;color:var(--y-success)"><use href="#check"/></svg></div>
+        <div class="day today"><span>四</span><b>21</b><svg class="y-icon" style="width:12px;height:12px;color:var(--y-brand-800)"><use href="#check"/></svg></div>
+        <div class="day"><span>五</span><b>22</b></div>
+        <div class="day"><span>六</span><b>23</b></div>
+        <div class="day"><span>日</span><b>24</b></div>
+      </div>
+      <div class="day-row" style="margin-top:4px">
+        <div class="day"><span>一</span><b>25</b></div>
+        <div class="day"><span>二</span><b>26</b></div>
+        <div class="day"><span>三</span><b>27</b></div>
+        <div class="day"><span>四</span><b>28</b></div>
+        <div class="day"><span>五</span><b>29</b></div>
+        <div class="day"><span>六</span><b>30</b></div>
+        <div class="day"><span>日</span><b>31</b></div>
+      </div>
+      <div class="y-divider" style="margin:12px 0"></div>
+      <div class="y-row" style="gap:14px">
+        <span class="y-caption"><i class="y-dot" style="background:var(--y-success);display:inline-block;margin-right:4px"></i>已打卡</span>
+        <span class="y-caption"><i class="y-dot" style="background:var(--y-brand-500);display:inline-block;margin-right:4px"></i>今天</span>
+        <span class="y-caption">连续 6 天 · 本月第 12 次</span>
+      </div>
+    </div>
+    <div class="y-card y-card-pad" style="margin-top:10px">
+      <div class="y-between"><h3 style="font-size:15px;font-weight:600">签到记录</h3><button class="y-link">筛选<svg class="y-icon"><use href="#filter"/></svg></button></div>
+      <div class="y-divider" style="margin:10px 0"></div>
+      <div class="y-between" style="padding:6px 0"><div><strong style="font-size:13px">08-21 21:47 · 髋部打开序列</strong><div class="y-caption">线上课程 · 完成</div></div><span class="y-chip y-chip-success">+30 积分</span></div>
+      <div class="y-divider" style="margin:8px 0"></div>
+      <div class="y-between" style="padding:6px 0"><div><strong style="font-size:13px">08-20 19:00 · 肩颈舒缓 Flow</strong><div class="y-caption">教室 A · 到店签到</div></div><span class="y-chip y-chip-brand">-1 次</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 客服（二级） ================= -->
+<section class="screen" id="p-service">
+  <div class="sub-nav" style="position:sticky;top:32px;z-index:30">
+    <button class="back" onclick="go('msg')" aria-label="返回"><svg class="y-icon"><use href="#arrow-left"/></svg></button>
+    <h1>在线客服</h1>
+    <div class="right"><svg class="y-icon"><use href="#more"/></svg></div>
+    <div class="capsule"><span class="c"><b></b><b></b><b></b></span><span class="d"><i></i><i></i><i></i></span></div>
+  </div>
+  <div style="padding:12px 16px 0">
+    <div class="y-inline y-inline-info"><svg class="y-icon"><use href="#info"/></svg>客服在线时间 09:00–21:00 · 当前已接入</div>
+    <div class="chat" style="margin-top:12px">
+      <div class="chat-msg">
+        <img class="y-avatar sm" src="https://images.unsplash.com/photo-1552058544-f2b08422138a?auto=format&fit=crop&w=120&q=80" alt="客服">
+        <div class="bubble">你好 Mia，我是 Yoga 客服小悠，很高兴为你服务～</div>
+      </div>
+      <div class="chat-msg me">
+        <div class="bubble">你好，我的瑜伽垫 8 月 18 号显示签收了，但家里没收到</div>
+        <img class="y-avatar sm" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80" alt="Mia">
+      </div>
+      <div class="chat-msg">
+        <img class="y-avatar sm" src="https://images.unsplash.com/photo-1552058544-f2b08422138a?auto=format&fit=crop&w=120&q=80" alt="客服">
+        <div class="bubble">别担心，我帮你看一下物流记录。请确认下签收地址是否填写正确，也可以帮你联系快递员核实。</div>
+      </div>
+      <div class="chat-msg me">
+        <div class="bubble">地址是对的，麻烦帮我查一下</div>
+        <img class="y-avatar sm" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80" alt="Mia">
+      </div>
+      <div class="chat-msg">
+        <img class="y-avatar sm" src="https://images.unsplash.com/photo-1552058544-f2b08422138a?auto=format&fit=crop&w=120&q=80" alt="客服">
+        <div class="bubble">查询到包裹显示 8/18 10:30 已由前台代收，可能是公司前台收件了，你可以问下同事是否代收。</div>
+      </div>
+      <div class="chat-msg me">
+        <div class="bubble">好的，我去确认下，谢谢！</div>
+        <img class="y-avatar sm" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=120&q=80" alt="Mia">
+      </div>
+      <div class="chat-quick">
+        <span>订单查询</span><span>预约改期</span><span>会员咨询</span><span>售后申请</span>
+      </div>
+    </div>
+  </div>
+  <div class="sub-sticky">
+    <div class="y-input-wrap" style="flex:1">
+      <svg class="y-icon"><use href="#message"/></svg>
+      <input class="y-input" placeholder="输入消息…">
+    </div>
+    <button class="y-btn y-btn-primary y-btn-lg" style="flex:none" onclick="toast('消息已发送')">发送</button>
+  </div>
+</section>
+<!-- Toast -->
+<div class="y-toast" id="toast"><svg class="y-icon"><use href="#check"/></svg><span id="toast-text"></span></div>
+</main>
+
+<script>
+  function go(name){
+    document.querySelectorAll('.screen').forEach(function(s){ s.classList.toggle('active', s.id === 'p-' + name); });
+    document.querySelectorAll('.snav button').forEach(function(b){ b.classList.toggle('on', b.dataset.p === name); });
+    window.scrollTo(0,0);
+    if (location.hash !== '#' + name) history.replaceState(null, '', '#' + name);
+  }
+  (function(){
+    var h = (location.hash || '').replace(/^#/, '');
+    if (h && document.getElementById('p-' + h)) go(h);
+  })();
+  document.querySelectorAll('.snav button').forEach(function(b){ b.addEventListener('click', function(){ go(b.dataset.p); }); });
+  function toast(msg){
+    var t = document.getElementById('toast');
+    document.getElementById('toast-text').textContent = msg;
+    t.classList.add('show');
+    clearTimeout(t._h);
+    t._h = setTimeout(function(){ t.classList.remove('show'); }, 2000);
+  }
+  document.querySelectorAll('.sku').forEach(function(c){
+    c.addEventListener('click', function(){
+      document.querySelectorAll('.sku').forEach(function(x){ x.classList.remove('on'); });
+      c.classList.add('on');
+    });
+  });
+</script>
+</body>
+</html>
