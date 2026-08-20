@@ -1,0 +1,31 @@
+@import url('../reference/lt-design-system/colors_and_type.css');
+
+/* Yoga business aliases. Values intentionally inherit LT tokens. */
+:root{
+  --yoga-primary:var(--lt-primary);
+  --yoga-primary-light:var(--lt-primary-light);
+  --yoga-primary-dark:var(--lt-primary-dark);
+  --yoga-bg:var(--lt-background);
+  --yoga-surface:var(--lt-card);
+  --yoga-text:var(--lt-foreground);
+  --yoga-subtext:var(--lt-muted-foreground);
+  --yoga-border:var(--lt-border);
+  --yoga-success:var(--lt-state-success);
+  --yoga-warning:var(--lt-state-warning);
+  --yoga-error:var(--lt-state-error);
+  --yoga-info:var(--lt-state-info);
+  --yoga-radius-card:var(--lt-radius-lg);
+  --yoga-radius-control:var(--lt-radius-md);
+  --yoga-radius-tag:9999px;
+  --yoga-nav-height:44px;
+  --yoga-tab-height:56px;
+  --yoga-content-padding:var(--space-7);
+  --yoga-image-radius:var(--lt-radius-lg);
+}
+.yoga-page{font-family:var(--lt-font-sans);background:var(--yoga-bg);color:var(--yoga-text)}
+.yoga-card{background:var(--yoga-surface);border-radius:var(--yoga-radius-card);box-shadow:var(--shadow-1)}
+.yoga-title{font-size:var(--font-size-h1);font-weight:var(--font-weight-h1);line-height:var(--line-height-h1)}
+.yoga-body{font-size:var(--font-size-body);font-weight:var(--font-weight-body);line-height:var(--line-height-body)}
+.yoga-caption{font-size:var(--font-size-caption);color:var(--yoga-subtext);line-height:var(--line-height-body-sm)}
+.yoga-price{font-size:var(--font-size-price);font-weight:800;font-variant-numeric:tabular-nums}
+.yoga-primary{background:linear-gradient(135deg,var(--lt-primary-light),var(--lt-primary-dark));color:var(--lt-primary-foreground);box-shadow:var(--shadow-3)}
