@@ -1,56 +1,51 @@
-# Yoga Commercial Design
+# Yoga Commercial Design V2
 
-当前设计目录分为两层：
+当前 `design/` 已完成一次彻底视觉重构。
 
-1. `reference/lt-design-system/`：用户提供的 LT Design System 源参考，作为唯一视觉基准。
-2. `yoga-ds/`：在 LT Token 和组件语义之上建立的瑜伽业务设计系统。
+## 设计层级
 
-## 核心原则
+```text
+LT Design System（母系统）
+        ↓
+Yoga Tokens V2
+        ↓
+Core Components
+        ↓
+Yoga Business Components
+        ↓
+Patterns
+        ↓
+User / Admin Mobile UI
+```
 
-**继承 LT，不重新发明视觉。**
+## V2 核心变化
 
-- 主色：`#FFD600`
-- 页面背景：`#F5F5F5`
-- 卡片：`#FFFFFF`
-- 主文字：`#1A1A1A`
-- 状态：Success `#07C160` / Warning `#FF9500` / Error `#FF4444` / Info `#3B82F6`
-- 圆角：6 / 10 / 16px
-- 间距：4 / 6 / 8 / 10 / 12 / 14 / 16 / 20 / 24px
-- 中文字体优先 PingFang SC / 系统字体
+- 业务组件圆角从过度圆润调整为 6 / 8 / 10 / 12px；仅沉浸式容器使用 16px，胶囊保持 999px。
+- 页面安全边距统一 16px，核心卡片内间距 12~16px，常用纵向间距 8~12px，减少无意义留白。
+- LT `#FFD600` 保留为品牌强调色，不再大面积铺色；中性灰阶、细边框和轻阴影负责高级感。
+- 中文优先，禁止 Emoji 图标。
+- 建立统一 SVG 图标资源库，所有 UI 通过 `icons/sprite.svg` 引用。
+- 用户端遵循微信小程序信息架构；管理端严格为移动端 KMP，不做 Web/Desktop。
+- 沉浸式体验集中在课程摄影、训练状态、教练内容、底部抽屉、Sticky Action 与业务反馈，而不是无意义的大留白。
 
-## Yoga Design System
+## V2 入口
 
-查看：`yoga-ds/README.md`
+- `yoga-ds-v2/index.html`：设计系统入口
+- `yoga-ds-v2/components.html`：组件与状态示例
+- `yoga-ds-v2/user-showcase.html`：用户端微信小程序示例
+- `yoga-ds-v2/admin-showcase.html`：管理端移动经营工作台示例
+- `yoga-ds-v2/tokens.css`：Design Tokens
+- `yoga-ds-v2/icons/`：专业 SVG 图标资源
+- `yoga-ds-v2/patterns.md`：业务 Pattern
 
-Token：`yoga-ds/yoga-tokens.css`
+## 产品依据
 
-组件注册表：`yoga-ds/component-registry.json`
-
-组件示例：`yoga-ds/components.html`
-
-业务 Pattern：`yoga-ds/patterns.md`
-
-## 产品范围
-
-### 用户端
-微信小程序移动端：登录、首页、约课、课程、教练、会员、权益、训练记录、订单、支付、退款、签到、训练装备。
-
-### 管理端
-仅移动端：今日经营、排课、会员、交易、商品、库存、运营任务。
-
-### 数字课程
-P3 才进入当前产品路线，不进入现阶段核心导航。
-
-## 微信小程序导航
-
-导航栏必须为独立组件，并预留微信真实胶囊位置。生产实现使用 `wx.getMenuButtonBoundingClientRect()` 与状态栏高度动态计算，不把胶囊当作普通业务按钮。
-
-## 商用设计要求
-
-页面必须由登记在 `component-registry.json` 的组件和 Pattern 组合而成；每个关键业务组件需要覆盖正常、按压、禁用、Loading、Empty、Error 以及对应业务状态。
+用户端严格围绕 PRD 的用户生命周期、首页信息优先级、课程状态、预约资格校验、签到消课、会员权益、购买、订单/售后、商品关联等场景设计；管理端围绕“今天应该做什么”的运营工作台、会员画像、CRM、排课、签到、续费、沉默召回、商品和任务闭环设计。数字课程继续遵循 P3 路线。
 
 ## 预览
 
 ```bash
-python3 -m http.server 8080 --directory design
+python3 -m http.server 8080 --directory design/yoga-ds-v2
 ```
+
+然后访问 `http://localhost:8080/`。
