@@ -1,0 +1,107 @@
+name: V3 premium tuning
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  tune:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply V3-only visual tuning
+        shell: bash
+        run: |
+          cat > design/yoga-design-v3/premium-overrides.css <<'CSS'
+/* Yoga V3 premium tuning: visual-only layer, structure preserved. */
+:root{
+  --bd-bg:#F3EFE8;
+  --bd-surface:#FFFCF7;
+  --bd-line:transparent;
+  --bd-ink:#171714;
+  --bd-muted:#777269;
+  --bd-brand:#E8C62F;
+}
+
+/* Borderless component language */
+.tile,.pal-block,.type-scale,.ctl-block,.mini,.phone,.notify,.swatch-row,
+.y-card,.y-course,.y-task,.y-member,.y-input-wrap,.y-seg,.y-switch,.y-radio-box,.y-check-box,
+.y-chip,.cat-pill,.day,.y-btn-outline,.y-btn-secondary,.y-capsule,.y-tabbar,.y-nav,
+.y-list-item,.y-stat-card,.y-panel,.y-sheet,.y-modal,.y-cell,.y-product,.y-product-card{
+  border:0 !important;
+}
+.tile,.pal-block,.type-scale,.ctl-block,.mini,.phone{
+  background:var(--bd-surface);
+  box-shadow:0 10px 32px rgba(34,30,23,.055);
+}
+.tile-foot{border-top:0 !important;padding-top:8px}
+.type-row{border-bottom:0 !important}
+
+/* More premium spacing / hierarchy without changing DOM */
+.board{max-width:1180px;padding:32px 30px 72px}
+.b-head{padding:10px 0 28px;border-bottom:0}
+.b-head-nav a{border-radius:999px;padding:8px 13px}
+.b-head-nav a:hover{background:#FFFCF7;box-shadow:0 8px 24px rgba(34,30,23,.06)}
+.mod{margin-top:54px}
+.mod-title{font-size:26px;letter-spacing:-.045em}
+.mod-sub{line-height:1.7}
+.brand-card{border:0 !important;border-radius:24px;box-shadow:0 24px 60px rgba(27,26,23,.16)}
+.brand-card .brandmeta span{border:0;background:rgba(255,255,255,.09);border-radius:999px}
+.pal-block{border-radius:20px}
+.pal-body{padding:15px 16px 17px}
+.pal-role{border-radius:999px}
+.mini{border-radius:18px}
+
+/* True 390 x 844 viewport inside the existing V3 phone shell. */
+.phone-frame{width:280px !important;max-width:280px !important;height:606px !important;aspect-ratio:auto !important;border:10px solid #171714 !important;border-radius:38px !important;background:#171714 !important}
+.phone-frame .p-inner{width:260px !important;height:586px !important;inset:0 !important;background:var(--y-bg) !important}
+.phone-frame .p-scroll{width:260px !important;height:586px !important;flex:none !important;overflow:hidden !important}
+.phone-frame .p-scroll iframe{display:block !important;width:390px !important;height:844px !important;border:0 !important;transform:scale(.6666667) !important;transform-origin:top left !important;max-width:none !important}
+.phone-frame .p-status{display:none !important}
+.phone-frame .p-notch{z-index:50 !important}
+.phone-frame .p-bar{z-index:50 !important}
+
+/* Keep the device cards themselves borderless; the bezel is hardware, not a UI component. */
+.phone{padding:20px 18px 18px;border-radius:24px}
+
+/* V3 showcase pages: remove component borders while retaining structural dividers only where needed. */
+.y-nav:after{display:none !important}
+.y-nav,.y-tabbar{box-shadow:0 -8px 30px rgba(27,26,23,.045)}
+.y-capsule{box-shadow:0 5px 18px rgba(27,26,23,.07) !important}
+.y-btn-secondary,.y-btn-outline{box-shadow:0 5px 18px rgba(27,26,23,.045)}
+.y-chip{box-shadow:none}
+.day.today{box-shadow:inset 0 0 0 1px rgba(232,194,0,.35)}
+
+/* Avoid any accidental iframe clipping on narrow board layouts. */
+@media(max-width:960px){
+  .phone-frame{margin-left:auto;margin-right:auto}
+}
+CSS
+
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path('design/yoga-design-v3')
+          css = root / 'premium-overrides.css'
+          files = [
+              'board.html','components.html','index.html','subpages.html',
+              'user-showcase.html','admin-showcase.html','admin-subpages.html'
+          ]
+          for name in files:
+              p = root / name
+              if not p.exists():
+                  continue
+              s = p.read_text(encoding='utf-8')
+              if 'premium-overrides.css' not in s:
+                  s = s.replace('<link rel="stylesheet" href="tokens.css">', '<link rel="stylesheet" href="tokens.css">\n<link rel="stylesheet" href="premium-overrides.css">', 1)
+                  p.write_text(s, encoding='utf-8')
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add design/yoga-design-v3/premium-overrides.css design/yoga-design-v3/board.html design/yoga-design-v3/components.html design/yoga-design-v3/index.html design/yoga-design-v3/subpages.html design/yoga-design-v3/user-showcase.html design/yoga-design-v3/admin-showcase.html design/yoga-design-v3/admin-subpages.html
+          if git diff --cached --quiet; then
+            echo "No V3 changes needed"
+          else
+            git commit -m "design(v3): premium borderless tuning and fixed device viewport"
+            git push
+          fi
