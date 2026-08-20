@@ -1,42 +1,56 @@
-# Yoga Commercial UI V1
+# Yoga Commercial Design
 
-这是 Yoga 单店商业化 MVP 的 HTML + CSS + JS 高保真设计稿，不是最终生产代码。
+当前设计目录分为两层：
 
-## 设计目标
+1. `reference/lt-design-system/`：用户提供的 LT Design System 源参考，作为唯一视觉基准。
+2. `yoga-ds/`：在 LT Token 和组件语义之上建立的瑜伽业务设计系统。
 
-- 用户端：微信小程序移动端体验，预留真实微信胶囊所在的自定义导航栏位置。
-- 管理端：仅移动端，面向店长、前台、教练，不设计桌面/Web 后台。
-- 视觉：Modern Wellness，克制、温暖、专业；图片是内容的一部分，不使用灰色占位图。
-- 业务：预约、会员、训练、支付、退款、排课、会员经营、商品与运营任务。
-- 数字课程：P3 才进入当前产品路线，本版不进入用户端核心导航。
+## 核心原则
 
-## 页面
+**继承 LT，不重新发明视觉。**
 
-- `index.html`：设计系统与页面入口
-- `user-home.html`：用户首页
-- `user-course.html`：课程详情、预约确认、支付确认、签到状态
-- `user-member.html`：会员中心、权益、训练记录、订单/退款入口
-- `admin-home.html`：管理端今日经营
-- `admin-member.html`：会员详情与经营动作
-- `admin-schedule.html`：移动排课、预约名单、排课编辑
+- 主色：`#FFD600`
+- 页面背景：`#F5F5F5`
+- 卡片：`#FFFFFF`
+- 主文字：`#1A1A1A`
+- 状态：Success `#07C160` / Warning `#FF9500` / Error `#FF4444` / Info `#3B82F6`
+- 圆角：6 / 10 / 16px
+- 间距：4 / 6 / 8 / 10 / 12 / 14 / 16 / 20 / 24px
+- 中文字体优先 PingFang SC / 系统字体
 
-## 运行
+## Yoga Design System
 
-无需构建工具，直接打开 HTML 即可预览。建议使用本地静态服务器获得最佳体验：
+查看：`yoga-ds/README.md`
+
+Token：`yoga-ds/yoga-tokens.css`
+
+组件注册表：`yoga-ds/component-registry.json`
+
+组件示例：`yoga-ds/components.html`
+
+业务 Pattern：`yoga-ds/patterns.md`
+
+## 产品范围
+
+### 用户端
+微信小程序移动端：登录、首页、约课、课程、教练、会员、权益、训练记录、订单、支付、退款、签到、训练装备。
+
+### 管理端
+仅移动端：今日经营、排课、会员、交易、商品、库存、运营任务。
+
+### 数字课程
+P3 才进入当前产品路线，不进入现阶段核心导航。
+
+## 微信小程序导航
+
+导航栏必须为独立组件，并预留微信真实胶囊位置。生产实现使用 `wx.getMenuButtonBoundingClientRect()` 与状态栏高度动态计算，不把胶囊当作普通业务按钮。
+
+## 商用设计要求
+
+页面必须由登记在 `component-registry.json` 的组件和 Pattern 组合而成；每个关键业务组件需要覆盖正常、按压、禁用、Loading、Empty、Error 以及对应业务状态。
+
+## 预览
 
 ```bash
 python3 -m http.server 8080 --directory design
 ```
-
-然后访问 `http://localhost:8080/`。
-
-## 微信胶囊
-
-原型中的 `wx-capsule` 仅代表微信真实胶囊所在的导航区域，不把胶囊伪装成普通业务按钮。生产实现应读取微信运行时的 `wx.getMenuButtonBoundingClientRect()`、状态栏高度等参数动态布局。
-
-## 商用验收重点
-
-1. 正常、禁用、已预约、满员、候补、退款中等状态均有视觉表达。
-2. 页面不是单纯展示稿，关键动作都有入口。
-3. 用户端与管理端共享品牌、颜色、字体、状态语义。
-4. 管理端围绕“今天应该做什么”，而不是 PC CRUD 的缩小版。
