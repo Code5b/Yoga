@@ -1,0 +1,124 @@
+name: refine-v3-interaction
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/refine-v3-interaction.yml'
+permissions:
+  contents: write
+jobs:
+  refine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch V3 prototype
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          base = Path('design/yoga-design-v3')
+          user = base / 'user-showcase.html'
+          sub = base / 'subpages.html'
+
+          user_text = user.read_text(encoding='utf-8')
+          user_patch = r'''
+<style id="v3-interaction-refinement">
+/* V3 real mini-program viewport: never let showcase sizing distort the 390px UI */
+html,body{width:390px;min-width:390px;max-width:390px;margin:0 auto;overflow-x:hidden}
+*,*::before,*::after{box-sizing:border-box}
+/* Product header: centered title, system capsule only; no extra business controls beside it */
+.y-nav,.top-nav,.page-nav,.sub-nav{position:relative!important;display:grid!important;grid-template-columns:48px 1fr 48px!important;align-items:center!important;min-height:52px!important;padding-left:12px!important;padding-right:12px!important;gap:0!important}
+.y-nav h1,.y-nav .title,.top-nav h1,.top-nav .title,.page-nav h1,.page-nav .title,.sub-nav h1,.sub-nav .title{position:absolute!important;left:50%!important;transform:translateX(-50%)!important;margin:0!important;text-align:center!important;white-space:nowrap!important;max-width:210px!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.y-nav .capsule,.top-nav .capsule,.page-nav .capsule,.sub-nav .capsule{grid-column:3!important;justify-self:end!important}
+/* Do not place business actions next to the WeChat system capsule */
+.y-nav .actions,.top-nav .actions,.page-nav .actions,.sub-nav .actions{display:none!important}
+/* Training page uses the same V3 visual language as Home / Booking / Mall / Me */
+#train{background:var(--y-bg)!important;color:var(--y-ink-950)!important}
+#train .y-card,#train .card,#train .panel,#train .train-item{background:var(--y-surface)!important;border:0!important;box-shadow:var(--y-shadow-1)!important;border-radius:var(--y-radius-md)!important}
+#train .y-chip,#train .chip,#train .cat-pill{border:0!important;background:var(--y-surface)!important}
+#train .active,#train .is-active{background:var(--y-brand-tint)!important;color:var(--y-brand-800)!important;border:0!important}
+/* remove showcase-only page selectors from the actual product surface */
+.snav{display:none!important}
+/* all V3 content controls are borderless */
+button,input,select,textarea,.y-card,.y-tile,.y-panel,.y-list-item,.cat-pill,.day,.course-time{border-width:0!important;border-color:transparent!important}
+</style>
+<script>
+(function(){
+  const PAGE_MAP={
+    course:'course',booking:'booking',train:'record',mall:'product',member:'member',record:'record',product:'product',lesson:'lesson',settings:'settings',orders:'orders',message:'message',coupon:'coupon',points:'points',referral:'referral',consumption:'consumption',coach:'coach'
+  };
+  window.nav=function(path,page){
+    if(!path)return;
+    const target=String(path).split('/').pop();
+    if(target==='subpages.html'){
+      const key=PAGE_MAP[page]||page||'course';
+      location.href='subpages.html#'+encodeURIComponent(key);
+    }else if(target==='user-showcase.html'){
+      location.href='user-showcase.html#'+encodeURIComponent(page||'home');
+    }else{
+      location.href=path+(page?'#'+encodeURIComponent(page):'');
+    }
+  };
+  function cleanHeader(){
+    document.querySelectorAll('.y-nav,.top-nav,.page-nav,.sub-nav').forEach(function(nav){
+      const title=nav.querySelector('h1,.title,[data-title]');
+      if(title){title.style.position='absolute';title.style.left='50%';title.style.transform='translateX(-50%)';title.style.textAlign='center'}
+      nav.querySelectorAll('.actions,.header-actions,.right-actions').forEach(function(x){x.style.display='none'});
+    });
+  }
+  cleanHeader();
+  new MutationObserver(cleanHeader).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+'''
+          if 'v3-interaction-refinement' not in user_text:
+              user_text = user_text.replace('</body>', user_patch + '\n</body>')
+              user.write_text(user_text, encoding='utf-8')
+
+          sub_text = sub.read_text(encoding='utf-8')
+          sub_patch = r'''
+<style id="v3-subpage-refinement">
+html,body{width:390px;min-width:390px;max-width:390px;margin:0 auto;overflow-x:hidden}
+*,*::before,*::after{box-sizing:border-box}
+.snav{display:none!important}
+.sub-nav{position:relative!important;display:grid!important;grid-template-columns:48px 1fr 48px!important;align-items:center!important;justify-items:stretch!important;padding:0 12px!important;gap:0!important;min-height:52px!important}
+.sub-nav .title,.sub-nav h1{position:absolute!important;left:50%!important;transform:translateX(-50%)!important;text-align:center!important;margin:0!important;white-space:nowrap!important;max-width:210px!important;overflow:hidden!important;text-overflow:ellipsis!important}
+.sub-nav .right,.sub-nav .actions{grid-column:3!important;justify-self:end!important}
+.sub-nav .right button,.sub-nav .actions button{display:none!important}
+.sub-nav .capsule{display:flex!important;justify-self:end!important}
+.screen{background:var(--y-bg)!important;color:var(--y-ink-950)!important}
+.screen .y-card,.screen .card,.screen .panel{border:0!important;box-shadow:var(--y-shadow-1)!important;border-radius:var(--y-radius-md)!important}
+.screen button,.screen input,.screen select,.screen textarea{border-color:transparent!important}
+</style>
+<script>
+(function(){
+  function showFromHash(){
+    const key=decodeURIComponent(location.hash.replace(/^#/,'')).trim();
+    if(!key)return;
+    const target=document.getElementById(key);
+    if(target){
+      document.querySelectorAll('.screen').forEach(function(s){s.classList.remove('active')});
+      target.classList.add('active');
+      window.scrollTo(0,0);
+    }
+  }
+  window.addEventListener('hashchange',showFromHash);
+  document.addEventListener('DOMContentLoaded',showFromHash);
+  window.addEventListener('load',showFromHash);
+})();
+</script>
+'''
+          if 'v3-subpage-refinement' not in sub_text:
+              sub_text = sub_text.replace('</body>', sub_patch + '\n</body>')
+              sub.write_text(sub_text, encoding='utf-8')
+
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add design/yoga-design-v3/user-showcase.html design/yoga-design-v3/subpages.html
+          git diff --cached --quiet || git commit -m 'fix: align v3 mini-program navigation and headers'
+          git push
+          git rm .github/workflows/refine-v3-interaction.yml
+          git commit -m 'chore: remove temporary refinement workflow'
+          git push
