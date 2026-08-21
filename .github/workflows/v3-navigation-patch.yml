@@ -1,0 +1,104 @@
+name: patch-v3-navigation
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    if: github.actor != 'github-actions[bot]'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch V3 user and subpages only
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          user = Path('design/yoga-design-v3/user-showcase.html')
+          text = user.read_text(encoding='utf-8')
+          css = r'''
+<style id="v3-navigation-refinement">
+  /* V3 product navigation: preserve the existing structure, only normalize the mini-program chrome. */
+  .y-nav{position:relative}
+  .y-nav-title{position:absolute!important;left:50%!important;transform:translateX(-50%)!important;white-space:nowrap;pointer-events:none}
+  .y-nav-actions{padding-right:0!important}
+  .y-nav-actions > *:not(.y-wechat-capsule):not(.wechat-capsule):not([data-wechat-capsule]){display:none!important}
+  .y-wechat-capsule,.wechat-capsule,[data-wechat-capsule]{margin-left:auto!important}
+  .day,.cat-pill,.train-item,.course-item,.product-item{border-color:transparent!important}
+  .day.today{border-color:transparent!important;box-shadow:inset 0 -2px 0 var(--y-brand-500)}
+  .cat-pill{border:0!important;box-shadow:none!important;border-radius:999px!important}
+  .train-item{background:var(--y-surface)!important;box-shadow:0 8px 24px rgba(27,26,23,.055)!important;border-radius:16px!important}
+  .course-item,.product-item{border:0!important}
+  .coupon-line{border-top:0!important;border-bottom:0!important}
+</style>
+'''
+          if 'id="v3-navigation-refinement"' not in text:
+              text = text.replace('</head>', css + '\n</head>', 1)
+          router = r'''
+<script id="v3-product-router">
+(function(){
+  // Existing product links already call nav(page, screen). This only supplies the missing route.
+  window.nav = window.nav || function(page, screen){
+    var target = page || 'user-showcase.html';
+    if(screen) target += '#' + encodeURIComponent(screen);
+    window.location.href = target;
+  };
+  // Keep native browser history usable for every existing back action.
+  window.v3Navigate = function(screen){
+    window.location.hash = encodeURIComponent(screen || 'home');
+  };
+})();
+</script>
+'''
+          if 'id="v3-product-router"' not in text:
+              text = text.replace('</body>', router + '\n</body>', 1)
+          user.write_text(text, encoding='utf-8')
+
+          sub = Path('design/yoga-design-v3/subpages.html')
+          text = sub.read_text(encoding='utf-8')
+          sub_css = r'''
+<style id="v3-subpage-chrome-refinement">
+  .y-nav{position:relative}
+  .y-nav-title{position:absolute!important;left:50%!important;transform:translateX(-50%)!important;white-space:nowrap;pointer-events:none}
+  .y-nav-actions{padding-right:0!important}
+  .y-nav-actions > *:not(.y-wechat-capsule):not(.wechat-capsule):not([data-wechat-capsule]){display:none!important}
+  .y-wechat-capsule,.wechat-capsule,[data-wechat-capsule]{margin-left:auto!important}
+  .screen,.subpage-card,.detail-card,.setting-row,.record-card,.order-card,.member-card{border-color:transparent!important}
+  .screen .y-card,.screen .y-tile,.screen .y-panel{border:0!important;box-shadow:0 8px 24px rgba(27,26,23,.055)!important}
+</style>
+'''
+          if 'id="v3-subpage-chrome-refinement"' not in text:
+              text = text.replace('</head>', sub_css + '\n</head>', 1)
+          sub_router = r'''
+<script id="v3-subpage-router">
+(function(){
+  function renderFromHash(){
+    var key = decodeURIComponent(location.hash.replace(/^#/, ''));
+    if(!key) return;
+    var target = document.getElementById(key);
+    if(!target) return;
+    var screens = document.querySelectorAll('.screen');
+    if(!screens.length) return;
+    screens.forEach(function(el){ el.classList.toggle('active', el === target); });
+    document.querySelectorAll('[data-page]').forEach(function(el){ el.classList.toggle('active', el.getAttribute('data-page') === key); });
+  }
+  window.addEventListener('hashchange', renderFromHash);
+  window.addEventListener('DOMContentLoaded', renderFromHash);
+})();
+</script>
+'''
+          if 'id="v3-subpage-router"' not in text:
+              text = text.replace('</body>', sub_router + '\n</body>', 1)
+          sub.write_text(text, encoding='utf-8')
+          PY
+      - name: Commit only V3 target files
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- design/yoga-design-v3/user-showcase.html design/yoga-design-v3/subpages.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "fix: connect v3 user subpage navigation"
+          git push
