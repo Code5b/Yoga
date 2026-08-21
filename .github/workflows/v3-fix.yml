@@ -1,0 +1,96 @@
+name: v3-navigation-repair
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Repair V3 user navigation and subpage chrome
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+          user = Path('design/yoga-design-v3/user-showcase.html')
+          text = user.read_text(encoding='utf-8')
+          css = '''
+<style id="v3-real-mini-program-chrome">
+.y-nav{position:relative!important;min-height:44px}
+.y-nav-title{position:absolute!important;left:50%!important;transform:translateX(-50%)!important;white-space:nowrap!important;pointer-events:none!important}
+.y-nav-actions{margin-left:auto!important;padding-left:0!important;padding-right:0!important;display:flex!important;align-items:center!important}
+.y-nav-actions > :not(.y-wechat-capsule):not(.wechat-capsule):not([data-wechat-capsule]){display:none!important}
+.y-wechat-capsule,.wechat-capsule,[data-wechat-capsule]{margin-left:auto!important}
+.day,.cat-pill,.train-item,.course-item,.product-item,.coupon-line{border:0!important;border-color:transparent!important}
+.day.today{box-shadow:inset 0 -2px 0 var(--y-brand-500)!important}
+.cat-pill{border-radius:999px!important}
+.train-item{background:var(--y-surface)!important;border-radius:16px!important;box-shadow:0 8px 24px rgba(27,26,23,.055)!important}
+</style>
+'''
+          if 'v3-real-mini-program-chrome' not in text:
+              text = text.replace('</head>', css + '\n</head>', 1)
+          router = '''
+<script id="v3-real-product-router">
+(function(){
+  var routes={
+    home:'user-showcase.html#home', booking:'user-showcase.html#booking', train:'user-showcase.html#train', mall:'user-showcase.html#mall', me:'user-showcase.html#me'
+  };
+  window.nav=function(page,screen){
+    var p=page||'user-showcase.html';
+    if(screen){p += '#' + encodeURIComponent(screen);}
+    window.location.href=p;
+  };
+  window.goBack=function(){
+    if(history.length>1) history.back(); else window.location.href='user-showcase.html#home';
+  };
+})();
+</script>
+'''
+          if 'v3-real-product-router' not in text:
+              text = text.replace('</body>', router + '\n</body>', 1)
+          user.write_text(text, encoding='utf-8')
+
+          sub = Path('design/yoga-design-v3/subpages.html')
+          text = sub.read_text(encoding='utf-8')
+          css2='''
+<style id="v3-real-subpage-chrome">
+.y-nav{position:relative!important;min-height:44px}
+.y-nav-title{position:absolute!important;left:50%!important;transform:translateX(-50%)!important;white-space:nowrap!important;pointer-events:none!important}
+.y-nav-actions{margin-left:auto!important;padding:0!important;display:flex!important;align-items:center!important}
+.y-nav-actions > :not(.y-wechat-capsule):not(.wechat-capsule):not([data-wechat-capsule]){display:none!important}
+.y-wechat-capsule,.wechat-capsule,[data-wechat-capsule]{margin-left:auto!important}
+</style>
+'''
+          if 'v3-real-subpage-chrome' not in text:
+              text=text.replace('</head>',css2+'\n</head>',1)
+          router2='''
+<script id="v3-real-subpage-router">
+(function(){
+  function key(){return decodeURIComponent(location.hash.replace(/^#/,''));}
+  function activate(k){
+    if(!k)return;
+    var target=document.getElementById(k);
+    if(target && typeof window.go==='function'){window.go(k);return;}
+    if(target){document.querySelectorAll('.screen').forEach(function(x){x.classList.toggle('active',x===target);});}
+  }
+  window.addEventListener('DOMContentLoaded',function(){activate(key());});
+  window.addEventListener('hashchange',function(){activate(key());});
+})();
+</script>
+'''
+          if 'v3-real-subpage-router' not in text:
+              text=text.replace('</body>',router2+'\n</body>',1)
+          sub.write_text(text,encoding='utf-8')
+          PY
+      - name: Commit repaired V3 files only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add design/yoga-design-v3/user-showcase.html design/yoga-design-v3/subpages.html
+          git diff --cached --quiet && exit 0
+          git commit -m "fix: repair v3 real user navigation"
+          git push
