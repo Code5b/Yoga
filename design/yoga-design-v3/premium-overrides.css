@@ -9,4 +9,7 @@
 .y-nav,.page-nav,.sub-nav,.nav-bar,.navbar{position:relative}.y-nav .title,.page-nav .title,.sub-nav .title,.nav-bar .title,.navbar .title{position:absolute!important;left:50%!important;transform:translateX(-50%)!important;white-space:nowrap;max-width:180px;text-align:center;pointer-events:none}
 /* System capsule is visual chrome, not a business feature. */
 .y-capsule,.wx-capsule,.mini-capsule,.wechat-capsule{border:0!important}
-@media(max-width:960px){.phone-frame{margin-left:auto;margin-right:auto}}
+/* Training and secondary pages use the same V3 surface language as Home. */
+.y-training,.y-train-page,.y-training-card,.train-item,.y-task-list,.y-progress-card,.y-goal-card{border:0!important;background:var(--y-surface)!important;color:var(--y-ink-950)!important;box-shadow:0 10px 30px rgba(34,30,23,.055)!important;border-radius:16px!important}.y-training *,.y-train-page *{border-color:transparent!important}.y-training .y-chip,.y-train-page .y-chip{background:var(--y-brand-tint)!important;color:var(--y-brand-800)!important;border:0!important}.y-training .y-btn,.y-train-page .y-btn{border:0!important}
+/* Remove business controls sitting immediately beside the system capsule. */
+.y-nav-actions>.y-btn-icon{display:none!important}.y-nav-actions{gap:0!important}.y-nav-actions>.y-capsule{margin-left:0!important}.y-nav .y-nav-title{position:absolute!important;left:50%!important;transform:translateX(-50%)!important;white-space:nowrap;text-align:center!important;pointer-events:none!important}
