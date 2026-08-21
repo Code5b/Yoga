@@ -1,0 +1,45 @@
+name: V3 refine
+on:
+  push:
+    paths:
+      - '.github/workflows/v3-refine.yml'
+permissions:
+  contents: write
+jobs:
+  refine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Refine V3 user showcase
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('design/yoga-design-v3/user-showcase.html')
+          s=p.read_text()
+          if 'v3-premium-runtime' not in s:
+              s=s.replace('<link rel="stylesheet" href="tokens.css">','<link rel="stylesheet" href="tokens.css">\n<link rel="stylesheet" href="premium-overrides.css">')
+              s=s.replace('</head>','<script id="v3-premium-runtime">\nfunction nav(page, target){ location.href = page + (target ? "#" + target : ""); }\nfunction go(target){ document.querySelectorAll(".screen").forEach(x=>x.classList.remove("active")); const el=document.getElementById("s-"+target); if(el) el.classList.add("active"); window.scrollTo({top:0,behavior:"instant"}); }\nwindow.addEventListener("load",()=>{ document.querySelectorAll(".y-nav").forEach(n=>{ const title=n.querySelector(".y-nav-title"); if(title){ title.style.position="absolute"; title.style.left="50%"; title.style.transform="translateX(-50%)"; title.style.whiteSpace="nowrap"; } n.querySelectorAll(".y-nav-actions .y-btn-icon").forEach(b=>b.remove()); }); });\n</script>\n</head>')
+              p.write_text(s)
+          PY
+      - name: Normalize V3 visual language
+        run: |
+          cat >> design/yoga-design-v3/premium-overrides.css <<'CSS'
+
+/* V3 final visual normalization */
+.y-nav{position:relative!important;min-height:56px!important;border:0!important}
+.y-nav-actions{gap:0!important}
+.y-nav-actions .y-capsule{margin-left:0!important}
+.y-nav-title{text-align:center!important}
+.y-card,.y-kpi,.y-member,.y-course,.y-list-item,.cat-pill,.day,.y-btn-outline,.y-btn-secondary,.y-chip{border:0!important}
+.y-card,.y-kpi,.y-member,.y-course{box-shadow:0 8px 24px rgba(27,26,23,.055)!important}
+.day.today{box-shadow:inset 0 0 0 1px var(--y-brand-500)!important;border:0!important}
+.cat-pill.active{border:0!important}
+.y-train,.train-item,.y-training-card{background:var(--y-surface)!important;color:var(--y-ink-950)!important;border:0!important;box-shadow:0 8px 24px rgba(27,26,23,.055)!important}
+CSS
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add design/yoga-design-v3/user-showcase.html design/yoga-design-v3/premium-overrides.css
+          git diff --cached --quiet || git commit -m 'refine V3 mini program navigation and visual consistency'
+          git push
